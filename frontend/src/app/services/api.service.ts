@@ -194,6 +194,13 @@ export class ApiService {
   }
 
   /**
+   * Marcar postulante como ausente
+   */
+  marcarAusente(postulanteId: number, request: RequestDesistir): Observable<ApiResponse<Adjudicacion>> {
+    return this.http.post<ApiResponse<Adjudicacion>>(`${this.apiUrl}/adjudicaciones/ausente/${postulanteId}`, request);
+  }
+
+  /**
    * Obtener adjudicaciones
    */
   getAdjudicaciones(): Observable<ApiResponse<Adjudicacion[]>> {

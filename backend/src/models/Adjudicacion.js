@@ -168,6 +168,71 @@ class Adjudicacion extends BaseModel {
     }
 
     /**
+     * Marcar postulante como ausente
+     */
+    async marcarAusente(postulanteId, observaciones = null) {
+        const client = await getClient();
+        
+        try {
+            await client.query('BEGIN');
+            
+            // Verificar que el postulante existe y está en estado pendiente
+            const postulante = await client.query(`
+                SELECT pos.*, adj.estado 
+                FROM postulantes pos 
+                LEFT JOIN adjudicaciones adj ON pos.id = adj.postulante_id 
+                WHERE pos.id = $1
+            `, [postulanteId]);
+            
+            if (postulante.rows.length === 0) {
+                throw new Error('Postulante no encontrado');
+            }
+            
+            const estadoActual = postulante.rows[0].estado;
+            if (estadoActual && estadoActual !== 'pendiente') {
+                throw new Error('Solo se puede marcar como ausente a postulantes en estado pendiente');
+            }
+            
+            // Verificar si ya existe un registro de adjudicación
+            const adjudicacionExistente = await client.query(
+                'SELECT * FROM adjudicaciones WHERE postulante_id = $1',
+                [postulanteId]
+            );
+            
+            let resultado;
+            
+            if (adjudicacionExistente.rows.length > 0) {
+                // Actualizar adjudicación existente
+                resultado = await client.query(`
+                    UPDATE adjudicaciones 
+                    SET estado = 'ausente',
+                        fecha_desistimiento = CURRENT_TIMESTAMP,
+                        observaciones = $1,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE postulante_id = $2
+                    RETURNING *
+                `, [observaciones, postulanteId]);
+            } else {
+                // Crear nueva adjudicación
+                resultado = await client.query(`
+                    INSERT INTO adjudicaciones (postulante_id, estado, fecha_desistimiento, observaciones)
+                    VALUES ($1, 'ausente', CURRENT_TIMESTAMP, $2)
+                    RETURNING *
+                `, [postulanteId, observaciones]);
+            }
+            
+            await client.query('COMMIT');
+            return resultado.rows[0];
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * Validar si se puede realizar una adjudicación
      */
     async validarAdjudicacion(postulanteId, plazaId) {

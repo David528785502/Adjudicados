@@ -144,16 +144,17 @@ html, body {
   }
 }
 
-/* Sección de botones inferiores */
-.bottom-buttons {
+/* Botones de exportación debajo de la tabla de postulantes */
+.export-buttons {
   display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 30px;
+  justify-content: flex-start;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 0 10px;
   
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
   }
 }
 
@@ -400,5 +401,10 @@ html, body {
   &.badge-info {
     background-color: #e3f2fd;
     color: var(--primary-color);
+  }
+  
+  &.badge-ausente {
+    background-color: #fff8e1;
+    color: #ff9800;
   }
 }

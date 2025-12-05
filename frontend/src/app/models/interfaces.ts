@@ -45,21 +45,17 @@ export interface Plaza {
 export interface Postulante {
   id: number;
   orden_merito: number;
-  apellidos_nombres: string;
-  dni: string;
-  fecha_inicio_contrato: string;
-  tiempo_servicio_anios: number;
-  tiempo_servicio_meses: number;
-  tiempo_servicio_dias: number;
-  horas_capacitacion: number;
+  apellidos: string;
+  nombres: string;
   grupo_ocupacional_id: number;
   grupo_ocupacional?: string; // Nombre del grupo (join)
+  fecha_registro: string;
   created_at?: string;
   updated_at?: string;
 }
 
 // Estados posibles de adjudicación
-export type EstadoAdjudicacion = 'pendiente' | 'adjudicado' | 'desistido' | 'renuncio';
+export type EstadoAdjudicacion = 'pendiente' | 'adjudicado' | 'desistido' | 'renuncio' | 'ausente';
 
 // Modelo para Adjudicación
 export interface Adjudicacion {
@@ -82,31 +78,32 @@ export interface Adjudicacion {
 export interface PostulanteConEstado {
   id: number;
   orden_merito: number;
-  apellidos_nombres: string;
-  dni: string;
-  fecha_inicio_contrato: string;
-  tiempo_servicio_anios: number;
-  tiempo_servicio_meses: number;
-  tiempo_servicio_dias: number;
-  horas_capacitacion: number;
+  apellidos_nombres: string; // Concatenado en la vista
+  apellidos: string;
+  nombres: string;
   grupo_ocupacional_id: number;
   grupo_ocupacional: string;
+  fecha_registro: string;
   estado: EstadoAdjudicacion;
   red_adjudicada?: string;
   ipress_adjudicada?: string;
-  subunidad_adjudicada?: string; // Nueva columna
+  subunidad_adjudicada?: string;
   grupo_ocupacional_adjudicado?: string;
+  especialidad_adjudicada?: string;
   fecha_adjudicacion?: string;
   fecha_desistimiento?: string;
+  observaciones?: string;
 }
 
 // Modelo para plaza con disponibilidad
 export interface PlazaConDisponibilidad {
   id: number;
+  red_id: number;
   red: string;
+  ipress_id: number;
   ipress: string;
-  grupo_ocupacional: string;
-  subunidad?: string; // Nueva columna
+  grupo_ocupacional_id: number;
+  subunidad?: string;
   especialidad: string;
   total: number;
   asignados: number;

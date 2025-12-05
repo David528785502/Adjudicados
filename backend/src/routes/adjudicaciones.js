@@ -183,6 +183,19 @@ router.post('/renuncia/:postulanteId',
 );
 
 /**
+ * @route   POST /api/adjudicaciones/ausente/:postulanteId
+ * @desc    Marcar postulante como ausente
+ * @access  Public (en producción debería requerir autenticación)
+ */
+router.post('/ausente/:postulanteId', 
+    validateParams({
+        postulanteId: commonSchemas.id.extract('id').required()
+    }),
+    validate(schemas.adjudicacion.desistir),
+    asyncHandler(adjudicacionController.marcarAusente.bind(adjudicacionController))
+);
+
+/**
  * @route   PUT /api/adjudicaciones/:id/estado
  * @desc    Actualizar estado de adjudicación
  * @access  Public (en producción debería requerir autenticación)

@@ -81,6 +81,7 @@ import {
                 <mat-option value="adjudicado">Adjudicado</mat-option>
                 <mat-option value="desistido">Desistido</mat-option>
                 <mat-option value="renuncio">Renunció</mat-option>
+                <mat-option value="ausente">Ausente</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
@@ -126,26 +127,41 @@ import {
                 <th mat-header-cell *matHeaderCellDef>Acciones</th>
                 <td mat-cell *matCellDef="let postulante">
                   <div class="action-buttons">
-                    <button mat-raised-button color="primary" 
-                           [disabled]="postulante.estado !== 'pendiente'"
-                           (click)="adjudicar(postulante)">
-                      <mat-icon>assignment</mat-icon>
-                      Adjudicar
-                    </button>
+                    <!-- Acciones para estado PENDIENTE -->
+                    <ng-container *ngIf="postulante.estado === 'pendiente'">
+                      <button mat-raised-button color="primary" 
+                             (click)="adjudicar(postulante)">
+                        <mat-icon>assignment</mat-icon>
+                        Adjudicar
+                      </button>
+                      
+                      <button mat-raised-button color="warn"
+                             (click)="desistir(postulante)">
+                        <mat-icon>cancel</mat-icon>
+                        Desistido
+                      </button>
+                      
+                      <button mat-raised-button 
+                             style="background-color: #ff9800; color: white;"
+                             (click)="marcarAusente(postulante)">
+                        <mat-icon>person_off</mat-icon>
+                        Ausente
+                      </button>
+                    </ng-container>
                     
-                    <button mat-raised-button color="warn"
-                           [disabled]="postulante.estado === 'desistido' || postulante.estado === 'renuncio'"
-                           (click)="desistir(postulante)">
-                      <mat-icon>cancel</mat-icon>
-                      Desistir
-                    </button>
+                    <!-- Acciones para estado ADJUDICADO -->
+                    <ng-container *ngIf="postulante.estado === 'adjudicado'">
+                      <button mat-raised-button color="accent"
+                             (click)="renunciar(postulante)">
+                        <mat-icon>exit_to_app</mat-icon>
+                        Renunciar
+                      </button>
+                    </ng-container>
                     
-                    <button mat-raised-button color="accent"
-                           [disabled]="postulante.estado !== 'adjudicado'"
-                           (click)="renunciar(postulante)">
-                      <mat-icon>exit_to_app</mat-icon>
-                      Renunciar
-                    </button>
+                    <!-- Sin acciones para otros estados -->
+                    <ng-container *ngIf="postulante.estado !== 'pendiente' && postulante.estado !== 'adjudicado'">
+                      <span style="color: #999;">Sin acciones disponibles</span>
+                    </ng-container>
                   </div>
                 </td>
               </ng-container>
@@ -209,12 +225,6 @@ import {
                 <td mat-cell *matCellDef="let plaza">{{plaza.ipress}}</td>
               </ng-container>
 
-              <!-- Columna Grupo Ocupacional -->
-              <ng-container matColumnDef="grupo">
-                <th mat-header-cell *matHeaderCellDef>Grupo Ocupacional</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.grupo_ocupacional}}</td>
-              </ng-container>
-
               <!-- Columna Subunidad -->
               <ng-container matColumnDef="subunidad">
                 <th mat-header-cell *matHeaderCellDef>Subunidad</th>
@@ -261,8 +271,8 @@ import {
         </div>
       </div>
 
-      <!-- Botones inferiores -->
-      <div class="bottom-buttons">
+      <!-- Botones de exportación -->
+      <div class="export-buttons">
         <button mat-raised-button color="primary" disabled>
           <mat-icon>picture_as_pdf</mat-icon>
           Crear PDF
@@ -286,11 +296,6 @@ import {
         </div>
 
         <div class="modal-body" *ngIf="postulanteSeleccionado">
-          <div class="info-banner">
-            <mat-icon>info</mat-icon>
-            <span>Puedes adjudicar a cualquier plaza disponible de cualquier red o grupo ocupacional</span>
-          </div>
-          
           <div class="postulante-info">
             <h3>Postulante Seleccionado</h3>
             <p><strong>Nombre:</strong> {{postulanteSeleccionado.apellidos_nombres}}</p>
@@ -300,7 +305,7 @@ import {
 
           <div class="plazas-disponibles">
             <div class="plazas-header">
-              <h3>Seleccionar Plaza</h3>
+              <h3>Plazas Disponibles</h3>
               <div class="plazas-counter">
                 <span class="badge">{{plazasFiltradasModal.length}} de {{plazasDisponibles.length}} plazas</span>
               </div>
@@ -316,17 +321,6 @@ import {
                          (input)="filtrarPlazasModal()" 
                          placeholder="Escriba para buscar...">
                   <button matSuffix mat-icon-button *ngIf="filtroModalRed" (click)="filtroModalRed = ''; filtrarPlazasModal()">
-                    <mat-icon>clear</mat-icon>
-                  </button>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="filtro-field">
-                  <mat-label>Filtrar por Grupo</mat-label>
-                  <input matInput 
-                         [(ngModel)]="filtroModalGrupo" 
-                         (input)="filtrarPlazasModal()" 
-                         placeholder="Escriba para buscar...">
-                  <button matSuffix mat-icon-button *ngIf="filtroModalGrupo" (click)="filtroModalGrupo = ''; filtrarPlazasModal()">
                     <mat-icon>clear</mat-icon>
                   </button>
                 </mat-form-field>
@@ -372,7 +366,6 @@ import {
                 <div class="plaza-info">
                   <div class="plaza-header">
                     <span class="red-badge">{{plaza.red}}</span>
-                    <span class="grupo-badge">{{plaza.grupo_ocupacional}}</span>
                     <span class="libres-badge">{{plaza.libres}} libres</span>
                   </div>
                   <div class="plaza-details">
@@ -666,7 +659,7 @@ export class AppComponent implements OnInit {
 
   // Columnas de las tablas
   columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'ipress', 'acciones'];
-  columnasPlazas: string[] = ['red', 'ipress', 'grupo', 'subunidad', 'especialidad', 'total', 'asignados', 'libres'];
+  columnasPlazas: string[] = ['red', 'ipress', 'subunidad', 'especialidad', 'total', 'asignados', 'libres'];
 
   // Filtros
   filtroPostulantes: FiltroPostulantes = {};
@@ -681,7 +674,6 @@ export class AppComponent implements OnInit {
   
   // Filtros del modal
   filtroModalRed: string = '';
-  filtroModalGrupo: string = '';
   filtroModalIpress: string = '';
 
   private apiService = inject(ApiService);
@@ -873,12 +865,13 @@ export class AppComponent implements OnInit {
     // Guardar el postulante seleccionado
     this.postulanteSeleccionado = postulante;
     
-    // Buscar TODAS las plazas disponibles (sin restricción de grupo ocupacional)
+    // Buscar plazas disponibles solo del mismo grupo ocupacional del postulante
     const filtros: FiltroPlazas = { 
+      grupoOcupacionalId: postulante.grupo_ocupacional_id,
       soloDisponibles: true // Solo mostrar plazas con cupos libres
     };
     
-    console.log('Buscando TODAS las plazas disponibles para selección libre:', filtros);
+    console.log('Buscando plazas disponibles para el grupo ocupacional:', postulante.grupo_ocupacional, filtros);
     
     this.apiService.getPlazasConDisponibilidad(filtros).subscribe({
       next: (response) => {
@@ -889,7 +882,6 @@ export class AppComponent implements OnInit {
           
           // Resetear filtros del modal
           this.filtroModalRed = '';
-          this.filtroModalGrupo = '';
           this.filtroModalIpress = '';
           
           this.mostrarModalAdjudicacion = true; // Mostrar modal
@@ -962,7 +954,6 @@ export class AppComponent implements OnInit {
     
     // Limpiar filtros
     this.filtroModalRed = '';
-    this.filtroModalGrupo = '';
     this.filtroModalIpress = '';
   }
 
@@ -980,7 +971,6 @@ export class AppComponent implements OnInit {
   filtrarPlazasModal() {
     console.log('Aplicando filtros modal:', {
       red: this.filtroModalRed,
-      grupo: this.filtroModalGrupo,
       ipress: this.filtroModalIpress
     });
 
@@ -989,15 +979,11 @@ export class AppComponent implements OnInit {
       const cumpleRed = !this.filtroModalRed || 
         plaza.red.toLowerCase().includes(this.filtroModalRed.toLowerCase());
       
-      // Filtro por grupo ocupacional
-      const cumpleGrupo = !this.filtroModalGrupo || 
-        plaza.grupo_ocupacional.toLowerCase().includes(this.filtroModalGrupo.toLowerCase());
-      
       // Filtro por IPRESS
       const cumpleIpress = !this.filtroModalIpress || 
         plaza.ipress.toLowerCase().includes(this.filtroModalIpress.toLowerCase());
       
-      return cumpleRed && cumpleGrupo && cumpleIpress;
+      return cumpleRed && cumpleIpress;
     });
 
     console.log(`Filtrado: ${this.plazasFiltradasModal.length} de ${this.plazasDisponibles.length} plazas`);
@@ -1014,7 +1000,6 @@ export class AppComponent implements OnInit {
    */
   limpiarFiltrosModal() {
     this.filtroModalRed = '';
-    this.filtroModalGrupo = '';
     this.filtroModalIpress = '';
     this.filtrarPlazasModal();
   }
@@ -1086,6 +1071,27 @@ export class AppComponent implements OnInit {
   }
 
   /**
+   * Marcar como ausente
+   */
+  marcarAusente(postulante: PostulanteConEstado) {
+    if (confirm(`¿Está seguro de marcar como AUSENTE a ${postulante.apellidos_nombres}?`)) {
+      this.apiService.marcarAusente(postulante.id, { 
+        postulanteId: postulante.id,
+        observaciones: 'Ausente registrado desde frontend' 
+      }).subscribe({
+        next: (response) => {
+          this.mostrarExito('Postulante marcado como ausente exitosamente');
+          this.cargarPostulantes();
+        },
+        error: (error) => {
+          console.error('Error al marcar ausente:', error);
+          this.mostrarError('Error al registrar ausencia');
+        }
+      });
+    }
+  }
+
+  /**
    * Obtener clase CSS para badge de estado
    */
   getBadgeClass(estado: EstadoAdjudicacion): string {
@@ -1094,6 +1100,7 @@ export class AppComponent implements OnInit {
       case 'adjudicado': return 'success';
       case 'desistido': return 'error';
       case 'renuncio': return 'info';
+      case 'ausente': return 'ausente';
       default: return 'info';
     }
   }
@@ -1107,6 +1114,7 @@ export class AppComponent implements OnInit {
       case 'adjudicado': return 'Adjudicado';
       case 'desistido': return 'Desistido';
       case 'renuncio': return 'Renunció';
+      case 'ausente': return 'Ausente';
       default: return 'Desconocido';
     }
   }

@@ -26,21 +26,15 @@ class Postulante extends BaseModel {
 
     /**
      * Buscar postulantes por criterios
+     * Usa la vista postulantes_con_estado que ya concatena apellidos + nombres
      */
     async searchPostulantes(filters = {}) {
         console.log('🔍 Postulante.searchPostulantes called with filters:', filters);
         
         try {
             let sql = `
-                SELECT 
-                    pos.*,
-                    go.nombre as grupo_ocupacional_nombre,
-                    COALESCE(adj.estado, 'pendiente') as estado,
-                    adj.fecha_adjudicacion,
-                    adj.fecha_desistimiento
-                FROM postulantes pos
-                INNER JOIN grupos_ocupacionales go ON pos.grupo_ocupacional_id = go.id
-                LEFT JOIN adjudicaciones adj ON pos.id = adj.postulante_id
+                SELECT *
+                FROM postulantes_con_estado
                 WHERE 1=1
             `;
             
@@ -50,51 +44,40 @@ class Postulante extends BaseModel {
             // Validate and apply filters
             if (filters.grupoOcupacionalId && !isNaN(parseInt(filters.grupoOcupacionalId))) {
                 paramCount++;
-                sql += ` AND pos.grupo_ocupacional_id = $${paramCount}`;
+                sql += ` AND grupo_ocupacional_id = $${paramCount}`;
                 params.push(parseInt(filters.grupoOcupacionalId));
                 console.log(`👥 Added grupoOcupacionalId filter: ${filters.grupoOcupacionalId}`);
             }
 
             if (filters.estado && typeof filters.estado === 'string') {
                 paramCount++;
-                if (filters.estado === 'pendiente') {
-                    sql += ` AND (adj.estado IS NULL OR adj.estado = $${paramCount})`;
-                } else {
-                    sql += ` AND adj.estado = $${paramCount}`;
-                }
+                sql += ` AND estado = $${paramCount}`;
                 params.push(filters.estado);
                 console.log(`📋 Added estado filter: ${filters.estado}`);
             }
 
             if (filters.nombre && typeof filters.nombre === 'string') {
                 paramCount++;
-                sql += ` AND pos.apellidos_nombres ILIKE $${paramCount}`;
+                sql += ` AND apellidos_nombres ILIKE $${paramCount}`;
                 params.push(`%${filters.nombre}%`);
                 console.log(`👤 Added nombre filter: ${filters.nombre}`);
             }
 
-            if (filters.dni && typeof filters.dni === 'string') {
-                paramCount++;
-                sql += ` AND pos.dni = $${paramCount}`;
-                params.push(filters.dni);
-                console.log(`🆔 Added DNI filter: ${filters.dni}`);
-            }
-
             if (filters.ordenMeritoDesde && !isNaN(parseInt(filters.ordenMeritoDesde))) {
                 paramCount++;
-                sql += ` AND pos.orden_merito >= $${paramCount}`;
+                sql += ` AND orden_merito >= $${paramCount}`;
                 params.push(parseInt(filters.ordenMeritoDesde));
                 console.log(`📊 Added ordenMeritoDesde filter: ${filters.ordenMeritoDesde}`);
             }
 
             if (filters.ordenMeritoHasta && !isNaN(parseInt(filters.ordenMeritoHasta))) {
                 paramCount++;
-                sql += ` AND pos.orden_merito <= $${paramCount}`;
+                sql += ` AND orden_merito <= $${paramCount}`;
                 params.push(parseInt(filters.ordenMeritoHasta));
                 console.log(`📊 Added ordenMeritoHasta filter: ${filters.ordenMeritoHasta}`);
             }
 
-            sql += ' ORDER BY pos.orden_merito';
+            sql += ' ORDER BY orden_merito';
             
             console.log('📄 Final SQL:', sql);
             console.log('🔢 Parameters:', params);

@@ -58,6 +58,22 @@ class AdjudicacionController extends BaseController {
     }
 
     /**
+     * Marcar postulante como ausente
+     */
+    async marcarAusente(req, res) {
+        try {
+            const { postulanteId } = req.params;
+            const { observaciones } = req.body;
+            
+            const result = await this.model.marcarAusente(postulanteId, observaciones);
+            this.sendSuccess(res, result, 'Postulante marcado como ausente exitosamente');
+        } catch (error) {
+            console.error('Error en marcarAusente:', error);
+            this.sendError(res, 'Error al marcar como ausente', error, 400);
+        }
+    }
+
+    /**
      * Validar si se puede realizar una adjudicación
      */
     async validarAdjudicacion(req, res) {
