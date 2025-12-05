@@ -1,0 +1,404 @@
+/* Tema azul para EsSalud - Sin Angular Material theming por ahora */
+:root {
+  --primary-color: #1976d2;
+  --primary-dark: #1565c0;
+  --accent-color: #64b5f6;
+  --warn-color: #f44336;
+  --success-color: #4caf50;
+  --warning-color: #ff9800;
+}
+
+/* Estilos globales */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: #f5f5f5;
+  overflow-x: hidden; /* Prevenir scroll horizontal en toda la página */
+  max-width: 100vw;
+}
+
+/* Contenedor principal */
+.main-container {
+  padding: 10px;
+  width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  height: calc(100vh - 80px); /* Altura total menos header */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Layout de 2 columnas */
+.tables-container {
+  display: grid;
+  grid-template-columns: 42% 56%;
+  gap: 12px;
+  margin-bottom: 10px;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  max-height: calc(100vh - 100px); /* Limitar altura para forzar scroll interno */
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.table-section {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 100px); /* Altura máxima para permitir scroll */
+}
+
+/* Estilos para las tablas */
+.mat-mdc-table {
+  width: 100% !important;
+  table-layout: auto !important; /* Cambiar a auto para mejor distribución */
+  
+  .mat-mdc-header-cell {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    padding: 10px 6px !important;
+    word-wrap: break-word;
+    text-align: center !important; /* Centrar encabezados */
+    white-space: normal !important; /* Permitir saltos de línea */
+    line-height: 1.3;
+    vertical-align: middle !important;
+  }
+  
+  .mat-mdc-cell {
+    color: #000000 !important;
+    font-weight: 500 !important;
+    font-size: 12px !important;
+    padding: 8px 6px !important;
+    word-wrap: break-word;
+    white-space: normal !important; /* Permitir saltos de línea en celdas */
+    line-height: 1.4;
+    vertical-align: middle !important;
+  }
+  
+  .mat-mdc-header-row {
+    background-color: var(--primary-color) !important;
+    min-height: 48px !important;
+  }
+  
+  .mat-mdc-row {
+    min-height: 52px !important;
+    
+    &:hover {
+      background-color: #f5f5f5;
+    }
+  }
+}
+
+/* Forzar colores específicos para Angular Material */
+.mat-table th {
+  color: white !important;
+  background-color: var(--primary-color) !important;
+  text-align: center !important;
+  white-space: normal !important;
+}
+
+.mat-table td {
+  color: #000000 !important;
+  white-space: normal !important;
+}
+
+/* Botones de acción */
+.action-buttons {
+  display: flex;
+  flex-direction: column; /* Siempre en vertical */
+  gap: 6px;
+  align-items: stretch;
+  
+  .mat-mdc-button,
+  .mat-mdc-raised-button {
+    min-width: 100% !important;
+    font-size: 11px !important;
+    padding: 4px 8px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    
+    .mat-icon {
+      font-size: 16px !important;
+      width: 16px !important;
+      height: 16px !important;
+      margin-right: 4px !important;
+    }
+  }
+}
+
+/* Sección de botones inferiores */
+.bottom-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Títulos de las secciones */
+.section-title {
+  color: var(--primary-color);
+  font-size: 1.2em;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  mat-icon {
+    font-size: 1.2em;
+  }
+}
+
+/* Estados de adjudicación */
+.estado-pendiente {
+  color: #ff9800;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+.estado-adjudicado {
+  color: #4caf50;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+.estado-desistido {
+  color: #f44336;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+.estado-renuncio {
+  color: #9c27b0;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Loading spinner */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* Responsive table wrapper */
+.table-responsive {
+  overflow-x: hidden; /* Sin scroll horizontal */
+  overflow-y: auto; /* Con scroll vertical */
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  
+  .mat-mdc-table {
+    width: 100% !important;
+  }
+  
+  /* Scrollbar vertical estilizado */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #1976d2;
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #1565c0;
+  }
+}
+
+/* Filtros */
+.filters-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  
+  .mat-mdc-form-field {
+    min-width: 160px;
+    flex: 1;
+    font-size: 12px;
+  }
+}
+
+/* Header de la aplicación */
+.app-header {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  h1 {
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 300;
+  }
+  
+  p {
+    margin: 5px 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9em;
+  }
+}
+
+/* Indicadores de disponibilidad */
+.disponibilidad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  
+  .disponible {
+    color: #4caf50;
+    font-weight: 500;
+  }
+  
+  .no-disponible {
+    color: #f44336;
+    font-weight: 500;
+  }
+}
+
+/* Columnas numéricas centradas */
+.mat-column-total,
+.mat-column-asignados,
+.mat-column-libres {
+  text-align: center !important;
+  justify-content: center !important;
+  width: 70px !important;
+  max-width: 70px !important;
+}
+
+/* Anchos específicos para columnas de Plazas */
+.mat-column-red {
+  width: 100px !important;
+  max-width: 100px !important;
+  text-align: center !important;
+}
+
+.mat-column-grupo {
+  width: 140px !important;
+  min-width: 140px !important;
+  text-align: center !important;
+}
+
+.mat-column-subunidad {
+  width: 130px !important;
+  min-width: 130px !important;
+  text-align: center !important;
+}
+
+.mat-column-especialidad {
+  width: 130px !important;
+  min-width: 130px !important;
+  text-align: center !important;
+}
+
+/* Columnas de postulantes centradas verticalmente */
+.mat-column-orden,
+.mat-column-nombres,
+.mat-column-estado,
+.mat-column-ipress {
+  vertical-align: middle !important;
+}
+
+/* Columnas centradas vertical y horizontalmente */
+.mat-column-orden,
+.mat-column-estado,
+.mat-column-ipress {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* Anchos específicos para columnas de Postulantes */
+.mat-column-orden {
+  width: 50px !important;
+  max-width: 50px !important;
+}
+
+.mat-column-estado {
+  width: 90px !important;
+  max-width: 90px !important;
+}
+
+.mat-column-ipress {
+  width: 180px !important;
+  min-width: 180px !important;
+}
+
+.mat-column-nombres {
+  width: auto !important;
+  min-width: 150px !important;
+}
+
+.mat-column-acciones {
+  width: 120px !important;
+  max-width: 120px !important;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  
+  &.badge-success {
+    background-color: #e8f5e8;
+    color: var(--success-color);
+  }
+  
+  &.badge-warning {
+    background-color: #fff3e0;
+    color: var(--warning-color);
+  }
+  
+  &.badge-error {
+    background-color: #ffebee;
+    color: var(--warn-color);
+  }
+  
+  &.badge-info {
+    background-color: #e3f2fd;
+    color: var(--primary-color);
+  }
+}

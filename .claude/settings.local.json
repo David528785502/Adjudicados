@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(move schema.sql 02_crear_esquema.sql)",
+      "Bash(ren:*)",
+      "Bash(python analizar_y_generar_sql.py:*)",
+      "Read(//c/Users/soporte/Desktop/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
