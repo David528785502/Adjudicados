@@ -136,10 +136,19 @@ import {
           </button>
 
           <div class="upload-section">
-            <input type="file" #fileInput accept=".xlsx,.xls" style="display: none;">
-            <button mat-raised-button color="accent" class="upload-button">
+            <input type="file" 
+                   #fileInput 
+                   accept=".xlsx,.xls" 
+                   style="display: none;"
+                   (change)="onFileSelected($event)">
+            <button mat-raised-button 
+                    color="accent" 
+                    class="upload-button"
+                    (click)="fileInput.click()"
+                    [disabled]="uploadingFile">
               <mat-icon>upload_file</mat-icon>
-              Subir Excel
+              <span *ngIf="!uploadingFile">Subir Excel</span>
+              <span *ngIf="uploadingFile">Subiendo...</span>
             </button>
           </div>
         </div>
@@ -1024,6 +1033,7 @@ export class AppComponent implements OnInit {
   // Estados de carga
   loadingPostulantes = false;
   loadingPlazas = false;
+  uploadingFile = false;
 
   // Columnas de las tablas
   columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'ipress', 'acciones'];
@@ -1635,6 +1645,18 @@ export class AppComponent implements OnInit {
     this.loadingPostulantes = true;
     this.loadingPlazas = true;
     
+    let postulantesLoaded = false;
+    let plazasLoaded = false;
+    
+    const aplicarFiltrosSiAmbosListos = () => {
+      if (postulantesLoaded && plazasLoaded && hayFiltrosGlobales) {
+        // Asegurar que se apliquen los filtros una vez que ambos conjuntos de datos estén cargados
+        setTimeout(() => {
+          this.aplicarFiltrosGlobales();
+        }, 0);
+      }
+    };
+    
     this.apiService.getPostulantesConEstado().subscribe({
       next: (response: any) => {
         const data = (response.data || response || []).slice().sort((a: any, b: any) => {
@@ -1658,19 +1680,19 @@ export class AppComponent implements OnInit {
         
         this.postulantesSinFiltrar = [...data];
         
-        // Aplicar filtros si existen
-        if (hayFiltrosGlobales) {
-          this.aplicarFiltrosGlobales();
-        } else {
+        if (!hayFiltrosGlobales) {
           this.postulantes = data;
         }
         
         this.extraerFechasDisponibles();
         this.loadingPostulantes = false;
+        postulantesLoaded = true;
+        aplicarFiltrosSiAmbosListos();
       },
       error: (error: any) => {
         this.mostrarError('Error al recargar postulantes');
         this.loadingPostulantes = false;
+        postulantesLoaded = true;
       }
     });
     
@@ -1679,20 +1701,23 @@ export class AppComponent implements OnInit {
         const data = response.data || response || [];
         this.plazasSinFiltrar = [...data];
         
-        // Aplicar filtros si existen
-        if (hayFiltrosGlobales) {
-          this.aplicarFiltrosGlobales();
-        } else {
+        if (!hayFiltrosGlobales) {
           this.plazas = data;
         }
         
         this.loadingPlazas = false;
+        plazasLoaded = true;
+        aplicarFiltrosSiAmbosListos();
       },
       error: (error: any) => {
         this.mostrarError('Error al recargar plazas');
         this.loadingPlazas = false;
       }
     });
+    
+    // Recargar también los filtros (grupos ocupacionales y redes)
+    this.cargarGruposOcupacionales();
+    this.cargarRedes();
   }
 
   /**
@@ -1929,6 +1954,78 @@ export class AppComponent implements OnInit {
     this.snackBar.open(mensaje, 'Cerrar', {
       duration: 3000,
       panelClass: ['info-snackbar']
+    });
+  }
+
+  /**
+   * Manejar selección de archivo Excel
+   */
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    
+    if (!file) {
+      return;
+    }
+
+    // Validar que sea un archivo Excel
+    const validTypes = [
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
+    ];
+
+    if (!validTypes.includes(file.type)) {
+      this.mostrarError('Solo se permiten archivos Excel (.xlsx, .xls)');
+      event.target.value = '';
+      return;
+    }
+
+    // Validar tamaño (máximo 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.mostrarError('El archivo no debe superar los 10MB');
+      event.target.value = '';
+      return;
+    }
+
+    // Subir archivo
+    this.uploadingFile = true;
+    this.mostrarInfo('Procesando archivo Excel...');
+
+    this.apiService.subirExcel(file).subscribe({
+      next: (response) => {
+        this.uploadingFile = false;
+        event.target.value = ''; // Limpiar el input
+
+        if (response.success) {
+          this.mostrarExito(
+            `Datos cargados exitosamente:\n` +
+            `${response.data.postulantes} postulantes\n` +
+            `${response.data.plazas} plazas\n` +
+            `Grupo: ${response.data.grupoOcupacional}`
+          );
+          
+          // Recargar los datos
+          this.recargarDatos();
+        } else {
+          this.mostrarError(response.message || 'Error al procesar el archivo');
+        }
+      },
+      error: (error) => {
+        this.uploadingFile = false;
+        event.target.value = ''; // Limpiar el input
+        
+        console.error('Error al subir archivo:', error);
+        
+        let mensajeError = 'Error al procesar el archivo Excel';
+        
+        if (error.error && error.error.message) {
+          mensajeError = error.error.message;
+        } else if (error.message) {
+          mensajeError = error.message;
+        }
+        
+        this.mostrarError(mensajeError);
+      }
     });
   }
 }

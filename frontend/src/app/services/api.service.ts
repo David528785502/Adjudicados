@@ -249,4 +249,18 @@ export class ApiService {
   getDashboard(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.apiUrl}/adjudicaciones/dashboard`);
   }
+
+  // ==========================================
+  // UPLOAD
+  // ==========================================
+
+  /**
+   * Subir archivo Excel con postulantes y plazas
+   */
+  subirExcel(file: File): Observable<ApiResponse<any>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/upload/excel`, formData);
+  }
 }

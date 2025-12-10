@@ -167,6 +167,7 @@ app.use('/api/grupos-ocupacionales', gruposOcupacionalesRoutes);
 app.use('/api/plazas', plazasRoutes);
 app.use('/api/postulantes', postulantesRoutes);
 app.use('/api/adjudicaciones', adjudicacionesRoutes);
+app.use('/api/upload', require('./src/routes/upload'));
 
 // Middleware de rutas no encontradas
 app.use(notFound);
