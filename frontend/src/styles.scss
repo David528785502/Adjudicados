@@ -161,6 +161,15 @@ html, body {
     align-items: stretch;
   }
   
+  .btn-pdf {
+    background-color: #d32f2f !important;
+    color: white !important;
+    
+    &:hover {
+      background-color: #b71c1c !important;
+    }
+  }
+  
   .btn-excel {
     background-color: #217346 !important;
     color: white !important;

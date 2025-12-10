@@ -24,6 +24,7 @@ import {
   RequestAdjudicar
 } from './models/interfaces';
 import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
 
 @Component({
   selector: 'app-root',
@@ -338,7 +339,7 @@ import * as XLSX from 'xlsx';
 
       <!-- Botones de exportación -->
       <div class="export-buttons">
-        <button mat-raised-button color="primary" disabled>
+        <button mat-raised-button class="btn-pdf" (click)="generarPDFCredenciales()">
           <mat-icon>picture_as_pdf</mat-icon>
           Crear PDF
         </button>
@@ -2107,5 +2108,192 @@ export class AppComponent implements OnInit {
     XLSX.writeFile(wb, nombreArchivo);
 
     this.mostrarExito(`Excel generado exitosamente: ${postulantesOrdenados.length} postulantes`);
+  }
+
+  /**
+   * Generar PDF de credenciales de adjudicación
+   */
+  generarPDFCredenciales() {
+    // Filtrar solo postulantes adjudicados
+    const adjudicados = this.postulantes.filter(p => p.estado === 'adjudicado');
+
+    if (adjudicados.length === 0) {
+      this.mostrarError('No hay postulantes adjudicados para generar credenciales');
+      return;
+    }
+
+    // Cargar el logo y la imagen del bottom
+    const logoImg = new Image();
+    const bottomImg = new Image();
+    logoImg.src = 'assets/images/logo-essalud.png';
+    bottomImg.src = 'assets/images/bottom.png';
+    
+    let logoLoaded = false;
+    let bottomLoaded = false;
+    
+    const checkBothLoaded = () => {
+      if (logoLoaded && bottomLoaded) {
+        this.generarPDFConImagenes(adjudicados, logoImg, bottomImg);
+      }
+    };
+    
+    logoImg.onload = () => {
+      logoLoaded = true;
+      checkBothLoaded();
+    };
+    
+    bottomImg.onload = () => {
+      bottomLoaded = true;
+      checkBothLoaded();
+    };
+    
+    logoImg.onerror = () => {
+      console.warn('No se pudo cargar el logo');
+      logoLoaded = true;
+      checkBothLoaded();
+    };
+    
+    bottomImg.onerror = () => {
+      console.warn('No se pudo cargar la imagen del bottom');
+      bottomLoaded = true;
+      checkBothLoaded();
+    };
+  }
+
+  /**
+   * Generar PDF con imágenes cargadas
+   */
+  private generarPDFConImagenes(adjudicados: PostulanteConEstado[], logoImg: HTMLImageElement | null, bottomImg: HTMLImageElement | null) {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let pageNumber = 0;
+
+    adjudicados.forEach((postulante, index) => {
+      if (index > 0) {
+        doc.addPage();
+      }
+      pageNumber++;
+
+      // Márgenes
+      const marginLeft = 20;
+      const marginRight = 20;
+      const marginTop = 10;
+      let yPos = marginTop;
+
+      // Agregar logo de EsSalud si está disponible (más grande)
+      if (logoImg) {
+        try {
+          doc.addImage(logoImg, 'PNG', marginLeft, yPos, 45, 22);
+        } catch (e) {
+          console.warn('Error al agregar logo al PDF:', e);
+        }
+      }
+      
+      yPos += 25;
+
+      // Encabezados en cursiva y centrados
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(100, 100, 100);
+      
+      const texto1 = '"Decenio de la Igualdad de Oportunidades para Mujeres y Hombres"';
+      const texto2 = '"Año de la recuperación y consolidación de la economía peruana"';
+      
+      doc.text(texto1, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 5;
+      doc.text(texto2, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Título del marco legal (justificado, negrita, centrado)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      
+      const tituloLey = 'TERCERA ETAPA DE IMPLEMENTACIÓN DE LA LEY N° 31539, "LEY QUE';
+      const tituloLey2 = 'AUTORIZA, EXCEPCIONALMENTE Y POR ÚNICA VEZ EN EL MARCO DE LA';
+      const tituloLey3 = 'EMERGENCIA SANITARIA, EL CAMBIO DE CONTRATO CAS - COVID A CONTRATO';
+      const tituloLey4 = 'CAS AL PERSONAL ASISTENCIAL EN EL SECTOR SALUD"';
+      
+      doc.text(tituloLey, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 5;
+      doc.text(tituloLey2, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 5;
+      doc.text(tituloLey3, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 5;
+      doc.text(tituloLey4, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // CREDENCIAL DE ADJUDICACIÓN (título principal)
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('CREDENCIAL DE ADJUDICACIÓN', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 15;
+
+      // Texto introductorio
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Por medio de la presente, se acredita a don(ña):', marginLeft, yPos);
+      yPos += 15;
+
+      // Nombre del postulante (MAYÚSCULAS, NEGRITA, CENTRADO)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(17);
+      const nombreCompleto = postulante.apellidos_nombres.toUpperCase();
+      doc.text(nombreCompleto, pageWidth / 2, yPos, { align: 'center' });
+      yPos += 12;
+
+      // Párrafo de beneficiario
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(13);
+      const maxWidth = pageWidth - marginLeft - marginRight;
+      
+      const cargo = postulante.grupo_ocupacional || 'CARGO NO ESPECIFICADO';
+      const especialidad = postulante.especialidad_adjudicada || 'GENERAL';
+      const ipress = postulante.ipress_adjudicada || 'IPRESS NO ESPECIFICADA';
+      
+      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${cargo.toUpperCase()} en la especialidad ${especialidad.toUpperCase()} en la ${ipress.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
+      
+      const lineasBeneficiario = doc.splitTextToSize(textoBeneficiario, maxWidth);
+      doc.text(lineasBeneficiario, marginLeft, yPos, { align: 'justify', maxWidth: maxWidth });
+      yPos += lineasBeneficiario.length * 5 + 10;
+
+      // Texto final
+      doc.text('Se expide la presente, para conocimiento y fines pertinentes.', marginLeft, yPos);
+      yPos += 15;
+
+      // Fecha
+      const fechaActual = new Date();
+      const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 
+                     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+      const textoFecha = `Jesus Maria, ${fechaActual.getDate()} de ${meses[fechaActual.getMonth()]} de ${fechaActual.getFullYear()}`;
+      doc.text(textoFecha, marginLeft, yPos);
+
+      // Pie de página con imagen bottom
+      if (bottomImg) {
+        try {
+          const footerY = pageHeight - 25;
+          // Agregar imagen del bottom con ancho proporcional
+          const bottomWidth = 80; // Ancho fijo más pequeño
+          const bottomHeight = 20; // Altura restaurada
+          const bottomX = (pageWidth - bottomWidth) / 2; // Centrar horizontalmente
+          doc.addImage(bottomImg, 'PNG', bottomX, footerY, bottomWidth, bottomHeight);
+        } catch (e) {
+          console.warn('Error al agregar imagen bottom al PDF:', e);
+        }
+      }
+    });
+
+    // Abrir PDF en nueva ventana
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+
+    this.mostrarExito(`PDF generado: ${adjudicados.length} credenciales`);
   }
 }
