@@ -38,8 +38,8 @@ html, body {
 /* Layout de 2 columnas */
 .tables-container {
   display: grid;
-  grid-template-columns: 42% 56%;
-  gap: 12px;
+  grid-template-columns: 42% 58%;
+  gap: 0;
   margin-bottom: 10px;
   width: 100%;
   flex: 1;
@@ -62,6 +62,14 @@ html, body {
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 100px); /* Altura máxima para permitir scroll */
+  
+  &:first-child {
+    margin-right: 6px;
+  }
+  
+  &:last-child {
+    margin-left: 6px;
+  }
 }
 
 /* Estilos para las tablas */
