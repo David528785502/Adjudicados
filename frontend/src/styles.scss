@@ -100,10 +100,6 @@ html, body {
   
   .mat-mdc-row {
     min-height: 52px !important;
-    
-    &:hover {
-      background-color: #f5f5f5;
-    }
   }
 }
 
@@ -296,6 +292,12 @@ html, body {
     color: #f44336;
     font-weight: 500;
   }
+}
+
+/* Fila de plaza sin disponibles (0 libres) */
+.plaza-sin-disponibles {
+  background-color: #ffebee !important;
+  border-left: 4px solid #f44336 !important;
 }
 
 /* Columnas numéricas centradas */

@@ -323,7 +323,8 @@ import {
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="columnasPlazas"></tr>
-              <tr mat-row *matRowDef="let row; columns: columnasPlazas;"></tr>
+              <tr mat-row *matRowDef="let row; columns: columnasPlazas;" 
+                  [class.plaza-sin-disponibles]="row.libres === 0"></tr>
             </table>
           </div>
 
@@ -1220,7 +1221,13 @@ export class AppComponent implements OnInit {
     this.loadingPlazas = true;
     this.apiService.getPlazasConDisponibilidad().subscribe({
       next: (response: any) => {
-        const data = response.data || response || [];
+        let data = response.data || response || [];
+        // Ordenar: plazas con libres > 0 primero, luego las que tienen 0
+        data = data.sort((a: any, b: any) => {
+          if (a.libres === 0 && b.libres > 0) return 1;
+          if (a.libres > 0 && b.libres === 0) return -1;
+          return 0;
+        });
         // Guardar copia sin filtrar
         this.plazasSinFiltrar = [...data];
         this.plazas = data;
@@ -1698,7 +1705,13 @@ export class AppComponent implements OnInit {
     
     this.apiService.getPlazasConDisponibilidad().subscribe({
       next: (response: any) => {
-        const data = response.data || response || [];
+        let data = response.data || response || [];
+        // Ordenar: plazas con libres > 0 primero, luego las que tienen 0
+        data = data.sort((a: any, b: any) => {
+          if (a.libres === 0 && b.libres > 0) return 1;
+          if (a.libres > 0 && b.libres === 0) return -1;
+          return 0;
+        });
         this.plazasSinFiltrar = [...data];
         
         if (!hayFiltrosGlobales) {
