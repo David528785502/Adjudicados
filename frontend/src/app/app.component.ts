@@ -23,6 +23,7 @@ import {
   FiltroPlazas,
   RequestAdjudicar
 } from './models/interfaces';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-root',
@@ -342,7 +343,7 @@ import {
           Crear PDF
         </button>
         
-        <button mat-raised-button color="accent" disabled>
+        <button mat-raised-button class="btn-excel" (click)="exportarExcel()">
           <mat-icon>file_download</mat-icon>
           Crear Excel
         </button>
@@ -2040,5 +2041,71 @@ export class AppComponent implements OnInit {
         this.mostrarError(mensajeError);
       }
     });
+  }
+
+  /**
+   * Exportar postulantes a Excel
+   */
+  exportarExcel() {
+    // Ordenar postulantes según el orden solicitado
+    const ordenEstados: { [key: string]: number } = {
+      'adjudicado': 1,
+      'renuncio': 2,
+      'desistido': 3,
+      'ausente': 4,
+      'pendiente': 5
+    };
+
+    const postulantesOrdenados = [...this.postulantes].sort((a, b) => {
+      const ordenA = ordenEstados[a.estado] || 999;
+      const ordenB = ordenEstados[b.estado] || 999;
+      
+      if (ordenA !== ordenB) {
+        return ordenA - ordenB;
+      }
+      
+      return (a.orden_merito || 0) - (b.orden_merito || 0);
+    });
+
+    // Preparar datos para el Excel
+    const datosExcel = postulantesOrdenados.map(p => ({
+      'Apellidos y Nombres': p.apellidos_nombres || '',
+      'Grupo Ocupacional': p.grupo_ocupacional || '',
+      'Estado': p.estado?.toUpperCase() || '',
+      'RED': p.red_adjudicada || '',
+      'IPRESS': p.ipress_adjudicada || '',
+      'Sub Unidad': p.subunidad_adjudicada || '',
+      'Especialidad': p.especialidad_adjudicada || ''
+    }));
+
+    // Crear libro de trabajo
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosExcel);
+
+    // Estilo para las cabeceras (profesional)
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    
+    // Aplicar ancho de columnas
+    ws['!cols'] = [
+      { wch: 35 }, // Apellidos y Nombres
+      { wch: 25 }, // Grupo Ocupacional
+      { wch: 12 }, // Estado
+      { wch: 20 }, // RED
+      { wch: 30 }, // IPRESS
+      { wch: 20 }, // Sub Unidad
+      { wch: 25 }  // Especialidad
+    ];
+
+    // Crear el libro
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Postulantes');
+
+    // Generar nombre de archivo con fecha
+    const fecha = new Date().toISOString().split('T')[0];
+    const nombreArchivo = `Postulantes_${fecha}.xlsx`;
+
+    // Descargar archivo
+    XLSX.writeFile(wb, nombreArchivo);
+
+    this.mostrarExito(`Excel generado exitosamente: ${postulantesOrdenados.length} postulantes`);
   }
 }

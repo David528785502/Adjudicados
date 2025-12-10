@@ -160,6 +160,15 @@ html, body {
     flex-direction: column;
     align-items: stretch;
   }
+  
+  .btn-excel {
+    background-color: #217346 !important;
+    color: white !important;
+    
+    &:hover {
+      background-color: #1a5c37 !important;
+    }
+  }
 }
 
 /* Títulos de las secciones */
