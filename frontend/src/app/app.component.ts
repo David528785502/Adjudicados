@@ -49,6 +49,102 @@ import {
     </div>
 
     <div class="main-container">
+      <!-- Filtros Globales -->
+      <div class="global-filters">
+        <h3 class="filters-title">
+          <mat-icon>filter_list</mat-icon>
+          Filtros Generales
+        </h3>
+        <div class="filters-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Grupo Ocupacional</mat-label>
+            <mat-select [(value)]="filtroGlobal.grupoOcupacionalId" 
+                       (selectionChange)="aplicarFiltrosGlobales()">
+              <mat-option [value]="undefined">Todos</mat-option>
+              <mat-option *ngFor="let grupo of gruposOcupacionales" [value]="grupo.id">
+                {{grupo.nombre}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="fecha-filter-wrapper" (click)="$event.stopPropagation()">
+            <mat-form-field appearance="outline" (click)="toggleCalendario()">
+              <mat-label>Fecha de Registro</mat-label>
+              <input matInput 
+                     [value]="filtroGlobal.fechaRegistro ? formatearFecha(filtroGlobal.fechaRegistro) : 'Todas'"
+                     readonly
+                     style="cursor: pointer;">
+              <mat-icon matSuffix>calendar_today</mat-icon>
+            </mat-form-field>
+            
+            <!-- Calendario personalizado -->
+            <div class="calendario-popup" *ngIf="mostrarCalendario" (click)="$event.stopPropagation()">
+              <div class="calendario-header">
+                <button mat-icon-button (click)="cambiarMes(-1)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                <span class="calendario-mes">{{obtenerNombreMes()}} {{anioActualCalendario}}</span>
+                <button mat-icon-button (click)="cambiarMes(1)">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+              <div class="calendario-dias-semana">
+                <div class="dia-semana">D</div>
+                <div class="dia-semana">L</div>
+                <div class="dia-semana">M</div>
+                <div class="dia-semana">M</div>
+                <div class="dia-semana">J</div>
+                <div class="dia-semana">V</div>
+                <div class="dia-semana">S</div>
+              </div>
+              <div class="calendario-dias">
+                <div *ngFor="let dia of diasDelMes" 
+                     class="dia"
+                     [class.vacio]="!dia.numero"
+                     [class.disponible]="dia.disponible"
+                     [class.seleccionado]="dia.seleccionado"
+                     [class.hoy]="dia.hoy"
+                     (click)="seleccionarDia(dia)">
+                  {{dia.numero}}
+                </div>
+              </div>
+              <div class="calendario-footer">
+                <button mat-button (click)="limpiarFechaCalendario()">
+                  <mat-icon>clear</mat-icon>
+                  Todas
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select [(value)]="filtroGlobal.estado" 
+                       (selectionChange)="aplicarFiltrosGlobales()">
+              <mat-option [value]="undefined">Todos</mat-option>
+              <mat-option value="pendiente">Pendiente</mat-option>
+              <mat-option value="adjudicado">Adjudicado</mat-option>
+              <mat-option value="desistido">Desistido</mat-option>
+              <mat-option value="renuncio">Renunció</mat-option>
+              <mat-option value="ausente">Ausente</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button mat-raised-button color="primary" (click)="limpiarFiltros()">
+            <mat-icon>clear</mat-icon>
+            Limpiar Filtros
+          </button>
+
+          <div class="upload-section">
+            <input type="file" #fileInput accept=".xlsx,.xls" style="display: none;">
+            <button mat-raised-button color="accent" class="upload-button">
+              <mat-icon>upload_file</mat-icon>
+              Subir Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Contenedor de las 2 tablas -->
       <div class="tables-container">
         
@@ -58,33 +154,6 @@ import {
             <mat-icon>people</mat-icon>
             Postulantes ({{postulantes.length}})
           </h2>
-
-          <!-- Filtros para postulantes -->
-          <div class="filters-container">
-            <mat-form-field appearance="outline">
-              <mat-label>Grupo Ocupacional</mat-label>
-              <mat-select [(value)]="filtroPostulantes.grupoOcupacionalId" 
-                         (selectionChange)="filtrarPostulantes()">
-                <mat-option [value]="undefined">Todos</mat-option>
-                <mat-option *ngFor="let grupo of gruposOcupacionales" [value]="grupo.id">
-                  {{grupo.nombre}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Estado</mat-label>
-              <mat-select [(value)]="filtroPostulantes.estado" 
-                         (selectionChange)="filtrarPostulantes()">
-                <mat-option [value]="undefined">Todos</mat-option>
-                <mat-option value="pendiente">Pendiente</mat-option>
-                <mat-option value="adjudicado">Adjudicado</mat-option>
-                <mat-option value="desistido">Desistido</mat-option>
-                <mat-option value="renuncio">Renunció</mat-option>
-                <mat-option value="ausente">Ausente</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
 
           <!-- Tabla de postulantes -->
           <div class="table-responsive">
@@ -118,7 +187,7 @@ import {
               <ng-container matColumnDef="ipress">
                 <th mat-header-cell *matHeaderCellDef>IPRESS</th>
                 <td mat-cell *matCellDef="let postulante">
-                  {{postulante.ipress_adjudicada || '-'}}
+                  {{postulante.estado === 'renuncio' ? '-' : (postulante.ipress_adjudicada || '-')}}
                 </td>
               </ng-container>
 
@@ -130,20 +199,23 @@ import {
                     <!-- Acciones para estado PENDIENTE -->
                     <ng-container *ngIf="postulante.estado === 'pendiente'">
                       <button mat-raised-button color="primary" 
+                             [disabled]="loadingPostulantes"
                              (click)="adjudicar(postulante)">
                         <mat-icon>assignment</mat-icon>
                         Adjudicar
                       </button>
                       
                       <button mat-raised-button color="warn"
-                             (click)="desistir(postulante)">
+                             [disabled]="loadingPostulantes"
+                             (click)="confirmarDesistir(postulante)">
                         <mat-icon>cancel</mat-icon>
                         Desistido
                       </button>
                       
                       <button mat-raised-button 
                              style="background-color: #ff9800; color: white;"
-                             (click)="marcarAusente(postulante)">
+                             [disabled]="loadingPostulantes"
+                             (click)="confirmarAusente(postulante)">
                         <mat-icon>person_off</mat-icon>
                         Ausente
                       </button>
@@ -152,15 +224,22 @@ import {
                     <!-- Acciones para estado ADJUDICADO -->
                     <ng-container *ngIf="postulante.estado === 'adjudicado'">
                       <button mat-raised-button color="accent"
-                             (click)="renunciar(postulante)">
+                             [disabled]="loadingPostulantes"
+                             (click)="confirmarRenuncia(postulante)">
                         <mat-icon>exit_to_app</mat-icon>
                         Renunciar
                       </button>
                     </ng-container>
                     
-                    <!-- Sin acciones para otros estados -->
-                    <ng-container *ngIf="postulante.estado !== 'pendiente' && postulante.estado !== 'adjudicado'">
-                      <span style="color: #999;">Sin acciones disponibles</span>
+                    <!-- Acciones para estados DESISTIDO, AUSENTE, RENUNCIO -->
+                    <ng-container *ngIf="postulante.estado === 'desistido' || postulante.estado === 'ausente' || postulante.estado === 'renuncio'">
+                      <button mat-raised-button 
+                             style="background-color: #4caf50; color: white;"
+                             [disabled]="loadingPostulantes"
+                             (click)="confirmarReasignar(postulante)">
+                        <mat-icon>replay</mat-icon>
+                        Reasignar
+                      </button>
                     </ng-container>
                   </div>
                 </td>
@@ -183,31 +262,6 @@ import {
             <mat-icon>business</mat-icon>
             IPRESS - Plazas Disponibles ({{plazas.length}})
           </h2>
-
-          <!-- Filtros para plazas -->
-          <div class="filters-container">
-            <mat-form-field appearance="outline">
-              <mat-label>Red</mat-label>
-              <mat-select [(value)]="filtroPlazas.redId" 
-                         (selectionChange)="filtrarPlazas()">
-                <mat-option [value]="undefined">Todas</mat-option>
-                <mat-option *ngFor="let red of redes" [value]="red.id">
-                  {{red.nombre}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>Grupo Ocupacional</mat-label>
-              <mat-select [(value)]="filtroPlazas.grupoOcupacionalId" 
-                         (selectionChange)="filtrarPlazas()">
-                <mat-option [value]="undefined">Todos</mat-option>
-                <mat-option *ngFor="let grupo of gruposOcupacionales" [value]="grupo.id">
-                  {{grupo.nombre}}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
 
           <!-- Tabla de plazas -->
           <div class="table-responsive">
@@ -305,57 +359,13 @@ import {
 
           <div class="plazas-disponibles">
             <div class="plazas-header">
-              <h3>Plazas Disponibles</h3>
-              <div class="plazas-counter">
-                <span class="badge">{{plazasFiltradasModal.length}} de {{plazasDisponibles.length}} plazas</span>
-              </div>
-            </div>
-            
-            <!-- Filtros del Modal -->
-            <div class="filtros-modal">
-              <div class="filtros-row">
-                <mat-form-field appearance="outline" class="filtro-field">
-                  <mat-label>Filtrar por Red</mat-label>
-                  <input matInput 
-                         [(ngModel)]="filtroModalRed" 
-                         (input)="filtrarPlazasModal()" 
-                         placeholder="Escriba para buscar...">
-                  <button matSuffix mat-icon-button *ngIf="filtroModalRed" (click)="filtroModalRed = ''; filtrarPlazasModal()">
-                    <mat-icon>clear</mat-icon>
-                  </button>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="filtro-field">
-                  <mat-label>Filtrar por IPRESS</mat-label>
-                  <input matInput 
-                         [(ngModel)]="filtroModalIpress" 
-                         (input)="filtrarPlazasModal()" 
-                         placeholder="Escriba para buscar...">
-                  <button matSuffix mat-icon-button *ngIf="filtroModalIpress" (click)="filtroModalIpress = ''; filtrarPlazasModal()">
-                    <mat-icon>clear</mat-icon>
-                  </button>
-                </mat-form-field>
-
-                <button mat-icon-button 
-                        color="accent" 
-                        (click)="limpiarFiltrosModal()" 
-                        matTooltip="Limpiar todos los filtros">
-                  <mat-icon>filter_list_off</mat-icon>
-                </button>
+              <div class="header-content">
+                <h3>Plazas Disponibles</h3>
+                <span class="plazas-count">{{plazasFiltradasModal.length}} de {{plazasDisponibles.length}} {{plazasFiltradasModal.length === 1 ? 'plaza' : 'plazas'}}</span>
               </div>
             </div>
             
             <div class="plazas-list">
-              <!-- Mensaje cuando no hay resultados -->
-              <div *ngIf="plazasFiltradasModal.length === 0" class="no-results">
-                <mat-icon>search_off</mat-icon>
-                <p>No se encontraron plazas con los filtros aplicados</p>
-                <button mat-stroked-button (click)="limpiarFiltrosModal()">
-                  <mat-icon>refresh</mat-icon>
-                  Limpiar Filtros
-                </button>
-              </div>
-
               <!-- Lista de plazas filtradas -->
               <div 
                 *ngFor="let plaza of plazasFiltradasModal" 
@@ -363,24 +373,45 @@ import {
                 [class.selected]="plazaSeleccionada?.id === plaza.id"
                 (click)="seleccionarPlaza(plaza)">
                 
-                <div class="plaza-info">
-                  <div class="plaza-header">
-                    <span class="red-badge">{{plaza.red}}</span>
-                    <span class="libres-badge">{{plaza.libres}} libres</span>
+                <div class="plaza-content">
+                  <div class="plaza-primary">
+                    <div class="plaza-red">
+                      <mat-icon class="location-icon">location_on</mat-icon>
+                      <span class="red-name">{{plaza.red}}</span>
+                    </div>
+                    <div class="plaza-libres">
+                      <span class="libres-number">{{plaza.libres}}</span>
+                      <span class="libres-text">{{plaza.libres === 1 ? 'libre' : 'libres'}}</span>
+                    </div>
                   </div>
-                  <div class="plaza-details">
-                    <strong>{{plaza.ipress}}</strong>
-                    <span class="subunidad" *ngIf="plaza.subunidad"> | {{plaza.subunidad}}</span>
-                    <span class="especialidad" *ngIf="plaza.especialidad"> - {{plaza.especialidad}}</span>
+                  
+                  <div class="plaza-secondary">
+                    <div class="ipress-name">{{plaza.ipress}}</div>
+                    <div class="plaza-meta">
+                      <span *ngIf="plaza.subunidad" class="meta-item">{{plaza.subunidad}}</span>
+                      <span *ngIf="plaza.especialidad" class="meta-item">{{plaza.especialidad}}</span>
+                    </div>
                   </div>
+                  
                   <div class="plaza-stats">
-                    Total: {{plaza.total}} | Asignados: {{plaza.asignados}} | Libres: {{plaza.libres}}
+                    <div class="stat-item">
+                      <span class="stat-label">Total:</span>
+                      <span class="stat-value">{{plaza.total}}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Asignados:</span>
+                      <span class="stat-value">{{plaza.asignados}}</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-label">Libres:</span>
+                      <span class="stat-value highlight">{{plaza.libres}}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div class="plaza-actions">
-                  <mat-icon *ngIf="plazaSeleccionada?.id === plaza.id" color="primary">check_circle</mat-icon>
-                  <mat-icon *ngIf="plazaSeleccionada?.id !== plaza.id">radio_button_unchecked</mat-icon>
+                <div class="plaza-selector">
+                  <mat-icon *ngIf="plazaSeleccionada?.id === plaza.id" class="selected-icon">check_circle</mat-icon>
+                  <mat-icon *ngIf="plazaSeleccionada?.id !== plaza.id" class="unselected-icon">radio_button_unchecked</mat-icon>
                 </div>
               </div>
             </div>
@@ -388,18 +419,61 @@ import {
         </div>
 
         <div class="modal-footer">
-          <button mat-button (click)="cerrarModalAdjudicacion()">
-            <mat-icon>cancel</mat-icon>
+          <button 
+            mat-stroked-button 
+            class="cancel-button"
+            (click)="cerrarModalAdjudicacion()">
+            <mat-icon>close</mat-icon>
             Cancelar
           </button>
           <button 
             mat-raised-button 
-            color="primary" 
+            color="primary"
+            class="confirm-button"
             [disabled]="!plazaSeleccionada || loadingPostulantes"
-            (click)="confirmarAdjudicacion()">
-            <mat-icon>assignment_turned_in</mat-icon>
+            (click)="confirmarAdjudicacionFinal()">
+            <mat-icon>check_circle</mat-icon>
             <span *ngIf="!loadingPostulantes">Confirmar Adjudicación</span>
             <span *ngIf="loadingPostulantes">Adjudicando...</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div class="modal-backdrop" *ngIf="mostrarModalConfirmacion" (click)="cancelarAccion()">
+      <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Confirmar Acción</h2>
+          <button mat-icon-button (click)="cancelarAccion()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="confirmation-message">
+            <mat-icon class="warning-icon">{{iconoConfirmacion}}</mat-icon>
+            <div class="message-content">
+              <pre>{{mensajeConfirmacion}}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button 
+            mat-stroked-button 
+            class="cancel-button"
+            (click)="cancelarAccion()">
+            <mat-icon>close</mat-icon>
+            Cancelar
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary"
+            class="confirm-button"
+            (click)="confirmarAccion()">
+            <mat-icon>check_circle</mat-icon>
+            Confirmar
           </button>
         </div>
       </div>
@@ -413,20 +487,21 @@ import {
       left: 0;
       width: 100vw;
       height: 100vh;
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(0, 0, 0, 0.6);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      backdrop-filter: blur(2px);
     }
 
     .modal-content {
       background: white;
-      border-radius: 8px;
-      max-width: 800px;
-      max-height: 80vh;
+      border-radius: 12px;
+      max-width: 900px;
+      max-height: 85vh;
       width: 90%;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -436,211 +511,504 @@ import {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px;
-      border-bottom: 1px solid #e0e0e0;
-      background-color: #f5f5f5;
+      padding: 24px 28px;
+      border-bottom: 2px solid #e3f2fd;
+      background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
     }
 
     .modal-header h2 {
       margin: 0;
-      color: #1976d2;
-    }
-
-    .info-banner {
+      color: white;
+      font-size: 22px;
+      font-weight: 500;
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      background-color: #e3f2fd;
-      border: 1px solid #2196f3;
-      border-radius: 4px;
-      margin-bottom: 16px;
-      color: #1976d2;
-      font-size: 14px;
+      gap: 10px;
     }
-    
-    .info-banner mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+
+    .modal-header button {
+      color: white !important;
     }
 
     .modal-body {
       padding: 20px;
       flex: 1;
       overflow-y: auto;
+      background-color: #fafafa;
     }
 
     .postulante-info {
       background-color: #e3f2fd;
-      padding: 15px;
+      padding: 12px 16px;
       border-radius: 4px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      border-left: 3px solid #1976d2;
     }
 
     .postulante-info h3 {
-      margin: 0 0 10px 0;
-      color: #1976d2;
+      margin: 0 0 8px 0;
+      color: #1565c0;
+      font-size: 14px;
+      font-weight: 600;
     }
 
     .postulante-info p {
       margin: 5px 0;
+      color: #424242;
+      font-size: 13px;
+    }
+
+    .postulante-info strong {
+      color: #1976d2;
+      font-weight: 600;
+    }
+
+    .plazas-disponibles {
+      background: white;
+      border-radius: 6px;
+      padding: 16px;
     }
 
     .plazas-header {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .plazas-header .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
     }
 
     .plazas-header h3 {
       margin: 0;
       color: #1976d2;
+      font-size: 16px;
+      font-weight: 600;
     }
 
-    .plazas-counter .badge {
+    .plazas-header .plazas-count {
       background-color: #ff9800;
       color: white;
       padding: 4px 12px;
       border-radius: 12px;
       font-size: 12px;
-      font-weight: bold;
-    }
-
-    .filtros-modal {
-      margin-bottom: 15px;
-      padding: 15px;
-      background-color: #f8f9fa;
-      border-radius: 4px;
-      border: 1px solid #e9ecef;
-    }
-
-    .filtros-row {
-      display: flex;
-      gap: 15px;
-      align-items: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .filtro-field {
-      flex: 1;
-      min-width: 200px;
+      font-weight: 600;
     }
 
     .plazas-list {
-      max-height: 300px;
+      max-height: 450px;
       overflow-y: auto;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
     }
 
     .plaza-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px;
-      border-bottom: 1px solid #f0f0f0;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.2s ease;
+      background: white;
     }
 
     .plaza-item:hover {
+      border-color: #1976d2;
       background-color: #f5f5f5;
     }
 
     .plaza-item.selected {
       background-color: #e3f2fd;
-      border-left: 4px solid #1976d2;
+      border-color: #1976d2;
+      border-width: 2px;
     }
 
-    .plaza-item:last-child {
-      border-bottom: none;
-    }
-
-    .plaza-info {
+    .plaza-content {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    .plaza-header {
+    .plaza-primary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .plaza-red {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 5px;
+      gap: 6px;
     }
 
-    .red-badge {
-      background-color: #1976d2;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
+    .location-icon {
+      color: #1976d2;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
     }
 
-    .grupo-badge {
-      background-color: #9c27b0;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: bold;
+    .red-name {
+      color: #1976d2;
+      font-size: 13px;
+      font-weight: 600;
     }
 
-    .libres-badge {
+    .plaza-libres {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       background-color: #4caf50;
-      color: white;
-      padding: 2px 8px;
+      padding: 4px 10px;
       border-radius: 12px;
+    }
+
+    .libres-number {
+      color: white;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .libres-text {
+      color: white;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .plaza-secondary {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .ipress-name {
+      color: #212121;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .plaza-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .meta-item {
+      color: #666;
       font-size: 12px;
-      font-weight: bold;
-    }
-
-    .no-results {
-      text-align: center;
-      padding: 40px 20px;
-      color: #666;
-    }
-
-    .no-results mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      color: #ccc;
-      margin-bottom: 10px;
-    }
-
-    .no-results p {
-      margin: 10px 0;
-      font-size: 16px;
-    }
-
-    .plaza-details {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .especialidad {
-      color: #666;
-      font-weight: normal;
+      padding: 2px 6px;
+      background-color: #f5f5f5;
+      border-radius: 3px;
     }
 
     .plaza-stats {
-      font-size: 12px;
-      color: #666;
+      display: flex;
+      gap: 12px;
+      padding-top: 6px;
+      margin-top: 4px;
+      border-top: 1px solid #e0e0e0;
     }
 
-    .plaza-actions {
-      padding: 0 10px;
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .stat-label {
+      color: #757575;
+      font-size: 11px;
+    }
+
+    .stat-value {
+      color: #424242;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .stat-value.highlight {
+      color: #4caf50;
+    }
+
+    .plaza-selector {
+      display: flex;
+      align-items: center;
+      padding-left: 12px;
+    }
+
+    .selected-icon {
+      color: #1976d2;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .unselected-icon {
+      color: #bdbdbd;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
     }
 
     .modal-footer {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
-      padding: 20px;
+      gap: 12px;
+      padding: 20px 28px;
+      border-top: 2px solid #e3f2fd;
+      background-color: #fafafa;
+    }
+
+    .cancel-button {
+      color: #d32f2f !important;
+      border-color: #d32f2f !important;
+      font-weight: 500;
+      padding: 0 24px;
+    }
+
+    .cancel-button:hover {
+      background-color: #ffebee !important;
+    }
+
+    .confirm-button {
+      font-weight: 500;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+    }
+
+    .confirm-button:hover:not([disabled]) {
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Modal de Confirmación */
+    .confirmation-modal {
+      max-width: 600px;
+    }
+
+    .confirmation-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 32px 24px;
+    }
+
+    .warning-icon {
+      font-size: 72px;
+      width: 72px;
+      height: 72px;
+      color: #1976d2;
+    }
+
+    .message-content {
+      width: 100%;
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 24px;
+      border-left: 4px solid #1976d2;
+    }
+
+    .confirmation-message pre {
+      white-space: pre-wrap;
+      font-family: 'Roboto', sans-serif;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #424242;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    /* Filtros Globales */
+    .global-filters {
+      background: white;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .filters-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 16px 0;
+      color: #1976d2;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .filters-title mat-icon {
+      color: #1976d2;
+    }
+
+    .filters-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+
+    .filters-row mat-form-field {
+      flex: 1;
+      min-width: 180px;
+      max-width: 250px;
+    }
+
+    .filters-row > button {
+      height: 56px;
+      margin-bottom: 22px;
+    }
+
+    /* Upload Section */
+    .upload-section {
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .upload-button {
+      height: 56px;
+      margin-bottom: 22px;
+      background-color: #4caf50 !important;
+      color: white !important;
+      font-weight: 500;
+      padding: 0 24px;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    }
+
+    .upload-button:hover {
+      background-color: #45a049 !important;
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    .upload-button mat-icon {
+      margin-right: 8px;
+    }
+
+    /* Calendario personalizado */
+    .fecha-filter-wrapper {
+      flex: 1;
+      min-width: 180px;
+      max-width: 250px;
+      position: relative;
+    }
+
+    .fecha-filter-wrapper mat-form-field {
+      cursor: pointer;
+    }
+
+    .fecha-filter-wrapper input {
+      cursor: pointer !important;
+      user-select: none;
+    }
+
+    .calendario-popup {
+      position: absolute;
+      top: 80%;
+      left: 0;
+      margin-top: 100 px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      padding: 12 px;
+      padding-bottom: -100px;
+      z-index: 1000;
+      min-width: 320px;
+    }
+
+    .calendario-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0px;
+    }
+
+    .calendario-mes {
+      font-weight: 600;
+      font-size: 16px;
+      color: #1976d2;
+    }
+
+    .calendario-dias-semana {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .dia-semana {
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      padding: 8px 0;
+    }
+
+    .calendario-dias {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .dia {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dia.vacio {
+      cursor: default;
+    }
+
+    .dia.disponible {
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .dia.disponible:hover {
+      background-color: #e3f2fd;
+    }
+
+    .dia.seleccionado {
+      background-color: #1976d2;
+      color: white;
+      font-weight: 600;
+    }
+
+    .dia.hoy {
+      border: 2px solid #1976d2;
+    }
+
+    .dia:not(.disponible):not(.vacio) {
+      color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .calendario-footer {
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid #e0e0e0;
-      background-color: #f5f5f5;
+      display: flex;
+      justify-content: center;
+    }
+
+    .calendario-footer button {
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-top: 0;
+      margin-bottom: 0;
     }
   `]
 })
@@ -664,6 +1032,22 @@ export class AppComponent implements OnInit {
   // Filtros
   filtroPostulantes: FiltroPostulantes = {};
   filtroPlazas: FiltroPlazas = {};
+  
+  // Filtro global
+  filtroGlobal: {
+    grupoOcupacionalId?: number;
+    fechaRegistro?: string;
+    estado?: EstadoAdjudicacion;
+  } = {};
+  fechasDisponibles: string[] = [];
+  postulantesSinFiltrar: PostulanteConEstado[] = [];
+  plazasSinFiltrar: PlazaConDisponibilidad[] = [];
+
+  // Calendario personalizado
+  mostrarCalendario = false;
+  mesActualCalendario: number = new Date().getMonth();
+  anioActualCalendario: number = new Date().getFullYear();
+  diasDelMes: Array<{numero: number | null, disponible: boolean, seleccionado: boolean, hoy: boolean, fecha?: string}> = [];
 
   // Modal de adjudicación
   mostrarModalAdjudicacion = false;
@@ -671,37 +1055,96 @@ export class AppComponent implements OnInit {
   plazasDisponibles: PlazaConDisponibilidad[] = [];
   plazasFiltradasModal: PlazaConDisponibilidad[] = [];
   plazaSeleccionada: PlazaConDisponibilidad | null = null;
-  
-  // Filtros del modal
-  filtroModalRed: string = '';
-  filtroModalIpress: string = '';
+
+  // Modal de confirmación
+  mostrarModalConfirmacion = false;
+  mensajeConfirmacion = '';
+  iconoConfirmacion = 'info';
+  accionConfirmacion: (() => void) | null = null;
 
   private apiService = inject(ApiService);
   private snackBar = inject(MatSnackBar);
 
   ngOnInit() {
-    console.log('Iniciando carga de datos...');
-    console.log('API URL:', 'http://localhost:3000/api');
     this.cargarDatos();
+    
+    // Listener para cerrar calendario al hacer clic fuera
+    document.addEventListener('click', (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      const clickedInsideCalendar = target.closest('.fecha-filter-wrapper');
+      
+      if (this.mostrarCalendario && !clickedInsideCalendar) {
+        setTimeout(() => {
+          this.mostrarCalendario = false;
+        }, 0);
+      }
+    });
   }
 
   /**
    * Cargar todos los datos iniciales
    */
-  cargarDatos() {
-    console.log('Iniciando carga de datos...');
-    console.log('Verificando conexión con backend...');
-    
-    // Primero cargar datos de referencia
-    this.cargarGruposOcupacionales();
-    this.cargarRedes();
-    
-    // Luego cargar datos principales
-    setTimeout(() => {
-      console.log('Cargando datos principales después de 1 segundo...');
-      this.cargarPostulantes();
+  async cargarDatos() {
+    try {
+      // Cargar datos de referencia primero
+      await this.cargarGruposOcupacionalesAsync();
+      await this.cargarRedesAsync();
+      
+      // Cargar datos principales
+      await this.cargarPostulantesAsync();
+      
+      // Finalmente cargar plazas
       this.cargarPlazas();
-    }, 1000);
+    } catch (error) {
+      console.error('Error durante la carga inicial:', error);
+    }
+  }
+
+  /**
+   * Cargar postulantes con estado (versión async)
+   */
+  cargarPostulantesAsync(): Promise<void> {
+    return new Promise((resolve) => {
+      this.cargarPostulantes();
+      // Esperar un poco para que la petición se inicie
+      setTimeout(() => resolve(), 100);
+    });
+  }
+
+  /**
+   * Cargar grupos ocupacionales (versión async)
+   */
+  cargarGruposOcupacionalesAsync(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.getGruposOcupacionales().subscribe({
+        next: (response) => {
+          this.gruposOcupacionales = response.data;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar grupos ocupacionales:', error);
+          resolve(); // No rechazar, continuar con la carga
+        }
+      });
+    });
+  }
+
+  /**
+   * Cargar redes (versión async)
+   */
+  cargarRedesAsync(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.apiService.getRedes().subscribe({
+        next: (response) => {
+          this.redes = response.data;
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar redes:', error);
+          resolve(); // No rechazar, continuar con la carga
+        }
+      });
+    });
   }
 
   /**
@@ -711,19 +1154,42 @@ export class AppComponent implements OnInit {
     this.loadingPostulantes = true;
     this.apiService.getPostulantesConEstado().subscribe({
       next: (response: any) => {
-        console.log('Respuesta postulantes:', response);
-        this.postulantes = (response.data || response || []).slice().sort((a: any, b: any) => (a.orden_merito || 0) - (b.orden_merito || 0));
+        const data = (response.data || response || []).slice().sort((a: any, b: any) => {
+          // Orden de prioridad de estados
+          const ordenEstado: { [key: string]: number } = {
+            'pendiente': 1,
+            'adjudicado': 2,
+            'renuncio': 3,
+            'desistido': 4,
+            'ausente': 5
+          };
+          
+          const estadoA = ordenEstado[a.estado] || 999;
+          const estadoB = ordenEstado[b.estado] || 999;
+          
+          // Primero ordenar por estado
+          if (estadoA !== estadoB) {
+            return estadoA - estadoB;
+          }
+          
+          // Luego por orden de mérito
+          return (a.orden_merito || 0) - (b.orden_merito || 0);
+        });
+        
+        // Guardar copia sin filtrar
+        this.postulantesSinFiltrar = [...data];
+        this.postulantes = data;
+        
+        // Extraer fechas únicas de registro
+        this.extraerFechasDisponibles();
+        
         this.loadingPostulantes = false;
       },
       error: (error: any) => {
-        console.error('Error al cargar postulantes:', error);
-        console.error('Status:', error.status);
-        console.error('Message:', error.message);
-        console.error('URL:', error.url);
         
         let errorMsg = 'Error al cargar postulantes';
         if (error.status === 0) {
-          errorMsg = 'No se pudo conectar con el servidor. ¿Está el backend ejecutándose en http://localhost:3000?';
+          errorMsg = 'No se pudo conectar con el servidor. Esta el backend ejecutandose en http://localhost:3000?';
         } else if (error.status >= 400 && error.status < 500) {
           errorMsg = `Error del cliente: ${error.status}`;
         } else if (error.status >= 500) {
@@ -744,19 +1210,17 @@ export class AppComponent implements OnInit {
     this.loadingPlazas = true;
     this.apiService.getPlazasConDisponibilidad().subscribe({
       next: (response: any) => {
-        console.log('Respuesta plazas:', response);
-        this.plazas = response.data || response || [];
+        const data = response.data || response || [];
+        // Guardar copia sin filtrar
+        this.plazasSinFiltrar = [...data];
+        this.plazas = data;
         this.loadingPlazas = false;
       },
       error: (error: any) => {
-        console.error('Error al cargar plazas:', error);
-        console.error('Status:', error.status);
-        console.error('Message:', error.message);
-        console.error('URL:', error.url);
         
         let errorMsg = 'Error al cargar plazas';
         if (error.status === 0) {
-          errorMsg = 'No se pudo conectar con el servidor. ¿Está el backend ejecutándose en http://localhost:3000?';
+          errorMsg = 'No se pudo conectar con el servidor. Esta el backend ejecutandose en http://localhost:3000?';
         } else if (error.status >= 400 && error.status < 500) {
           errorMsg = `Error del cliente: ${error.status}`;
         } else if (error.status >= 500) {
@@ -805,7 +1269,27 @@ export class AppComponent implements OnInit {
     this.loadingPostulantes = true;
     this.apiService.getPostulantes(this.filtroPostulantes).subscribe({
       next: (response) => {
-        this.postulantes = (response.data || []).slice().sort((a: any, b: any) => (a.orden_merito || 0) - (b.orden_merito || 0));
+        this.postulantes = (response.data || []).slice().sort((a: any, b: any) => {
+          // Orden de prioridad de estados
+          const ordenEstado: { [key: string]: number } = {
+            'pendiente': 1,
+            'adjudicado': 2,
+            'renuncio': 3,
+            'desistido': 4,
+            'ausente': 5
+          };
+          
+          const estadoA = ordenEstado[a.estado] || 999;
+          const estadoB = ordenEstado[b.estado] || 999;
+          
+          // Primero ordenar por estado
+          if (estadoA !== estadoB) {
+            return estadoA - estadoB;
+          }
+          
+          // Luego por orden de mérito
+          return (a.orden_merito || 0) - (b.orden_merito || 0);
+        });
         this.loadingPostulantes = false;
       },
       error: (error) => {
@@ -832,18 +1316,12 @@ export class AppComponent implements OnInit {
       if (!Number.isNaN(grupoIdNum)) filtros.grupoOcupacionalId = grupoIdNum;
     }
 
-    console.log('Filtrando plazas con filtros sanitizados:', filtros);
-
     this.apiService.getPlazasConDisponibilidad(filtros).subscribe({
       next: (response: any) => {
-        console.log('Respuesta filtrarPlazas:', response);
         this.plazas = response.data || [];
         this.loadingPlazas = false;
       },
       error: (error: any) => {
-        console.error('Error al filtrar plazas:', error);
-        console.error('Status:', error.status);
-        console.error('Response body:', error.error);
         this.mostrarError(`Error al filtrar plazas: ${error.status || 'desconocido'}`);
         this.loadingPlazas = false;
       }
@@ -851,11 +1329,178 @@ export class AppComponent implements OnInit {
   }
 
   /**
+   * Extraer fechas únicas de registro de postulantes
+   */
+  extraerFechasDisponibles() {
+    const fechasSet = new Set<string>();
+    this.postulantesSinFiltrar.forEach(p => {
+      if (p.fecha_registro) {
+        // Convertir la fecha a formato YYYY-MM-DD
+        const fecha = new Date(p.fecha_registro);
+        const fechaStr = fecha.toISOString().split('T')[0];
+        fechasSet.add(fechaStr);
+      }
+    });
+    this.fechasDisponibles = Array.from(fechasSet).sort().reverse(); // Más recientes primero
+  }
+
+  /**
+   * Formatear fecha para mostrar en el select
+   */
+  formatearFecha(fechaStr: string): string {
+    const fecha = new Date(fechaStr + 'T00:00:00');
+    const opciones: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return fecha.toLocaleDateString('es-ES', opciones);
+  }
+
+  /**
+   * Toggle mostrar/ocultar calendario
+   */
+  toggleCalendario() {
+    this.mostrarCalendario = !this.mostrarCalendario;
+    if (this.mostrarCalendario) {
+      this.generarDiasDelMes();
+    }
+  }
+
+  /**
+   * Obtener nombre del mes actual
+   */
+  obtenerNombreMes(): string {
+    const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    return meses[this.mesActualCalendario];
+  }
+
+  /**
+   * Cambiar mes del calendario
+   */
+  cambiarMes(direccion: number) {
+    this.mesActualCalendario += direccion;
+    if (this.mesActualCalendario > 11) {
+      this.mesActualCalendario = 0;
+      this.anioActualCalendario++;
+    } else if (this.mesActualCalendario < 0) {
+      this.mesActualCalendario = 11;
+      this.anioActualCalendario--;
+    }
+    this.generarDiasDelMes();
+  }
+
+  /**
+   * Generar array de días para el mes actual
+   */
+  generarDiasDelMes() {
+    this.diasDelMes = [];
+    const primerDia = new Date(this.anioActualCalendario, this.mesActualCalendario, 1);
+    const ultimoDia = new Date(this.anioActualCalendario, this.mesActualCalendario + 1, 0);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    // Días vacíos al inicio
+    for (let i = 0; i < primerDia.getDay(); i++) {
+      this.diasDelMes.push({ numero: null, disponible: false, seleccionado: false, hoy: false });
+    }
+    
+    // Días del mes
+    for (let dia = 1; dia <= ultimoDia.getDate(); dia++) {
+      const fecha = new Date(this.anioActualCalendario, this.mesActualCalendario, dia);
+      const fechaStr = fecha.toISOString().split('T')[0];
+      const disponible = this.fechasDisponibles.includes(fechaStr);
+      const seleccionado = this.filtroGlobal.fechaRegistro === fechaStr;
+      
+      fecha.setHours(0, 0, 0, 0);
+      const esHoy = fecha.getTime() === hoy.getTime();
+      
+      this.diasDelMes.push({
+        numero: dia,
+        disponible,
+        seleccionado,
+        hoy: esHoy,
+        fecha: fechaStr
+      });
+    }
+  }
+
+  /**
+   * Seleccionar un día del calendario
+   */
+  seleccionarDia(dia: any) {
+    if (!dia.disponible || !dia.numero) return;
+    
+    this.filtroGlobal.fechaRegistro = dia.fecha;
+    this.aplicarFiltrosGlobales();
+    this.mostrarCalendario = false;
+  }
+
+  /**
+   * Limpiar filtro de fecha desde el calendario
+   */
+  limpiarFechaCalendario() {
+    this.filtroGlobal.fechaRegistro = undefined;
+    this.aplicarFiltrosGlobales();
+    this.mostrarCalendario = false;
+  }
+
+  /**
+   * Aplicar filtros globales a ambas tablas
+   */
+  aplicarFiltrosGlobales() {
+    // Filtrar postulantes
+    let postulantesFiltrados = [...this.postulantesSinFiltrar];
+    
+    if (this.filtroGlobal.grupoOcupacionalId) {
+      postulantesFiltrados = postulantesFiltrados.filter(p => 
+        p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId
+      );
+    }
+    
+    if (this.filtroGlobal.estado) {
+      postulantesFiltrados = postulantesFiltrados.filter(p => 
+        p.estado === this.filtroGlobal.estado
+      );
+    }
+    
+    if (this.filtroGlobal.fechaRegistro) {
+      postulantesFiltrados = postulantesFiltrados.filter(p => {
+        if (!p.fecha_registro) return false;
+        const fecha = new Date(p.fecha_registro);
+        const fechaStr = fecha.toISOString().split('T')[0];
+        return fechaStr === this.filtroGlobal.fechaRegistro;
+      });
+    }
+    
+    this.postulantes = postulantesFiltrados;
+    
+    // Filtrar plazas
+    let plazasFiltradas = [...this.plazasSinFiltrar];
+    
+    if (this.filtroGlobal.grupoOcupacionalId) {
+      plazasFiltradas = plazasFiltradas.filter(p => 
+        p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId
+      );
+    }
+    
+    this.plazas = plazasFiltradas;
+  }
+
+  /**
+   * Limpiar todos los filtros
+   */
+  limpiarFiltros() {
+    this.filtroGlobal = {};
+    this.postulantes = [...this.postulantesSinFiltrar];
+    this.plazas = [...this.plazasSinFiltrar];
+  }
+
+  /**
    * Adjudicar postulante - mostrar plazas disponibles para selección
    */
   adjudicar(postulante: PostulanteConEstado) {
-    console.log(`Iniciando selección de plaza para ${postulante.apellidos_nombres} (OM: ${postulante.orden_merito})`);
-    
     // Validar que el postulante puede ser adjudicado
     if (postulante.estado !== 'pendiente') {
       this.mostrarError(`No se puede adjudicar: el postulante ya está en estado "${postulante.estado}"`);
@@ -871,8 +1516,6 @@ export class AppComponent implements OnInit {
       soloDisponibles: true // Solo mostrar plazas con cupos libres
     };
     
-    console.log('Buscando plazas disponibles para el grupo ocupacional:', postulante.grupo_ocupacional, filtros);
-    
     this.apiService.getPlazasConDisponibilidad(filtros).subscribe({
       next: (response) => {
         if (response.success && response.data && response.data.length > 0) {
@@ -880,12 +1523,7 @@ export class AppComponent implements OnInit {
           this.plazasFiltradasModal = [...response.data]; // Copia inicial sin filtros
           this.plazaSeleccionada = null; // Resetear selección
           
-          // Resetear filtros del modal
-          this.filtroModalRed = '';
-          this.filtroModalIpress = '';
-          
           this.mostrarModalAdjudicacion = true; // Mostrar modal
-          console.log(`Encontradas ${response.data.length} plazas disponibles`);
         } else {
           this.mostrarError(`No hay plazas disponibles para el grupo ocupacional "${postulante.grupo_ocupacional}"`);
         }
@@ -900,11 +1538,34 @@ export class AppComponent implements OnInit {
   /**
    * Confirmar adjudicación de la plaza seleccionada
    */
-  confirmarAdjudicacion() {
+  confirmarAdjudicacionFinal() {
     if (!this.postulanteSeleccionado || !this.plazaSeleccionada) {
       this.mostrarError('Debe seleccionar una plaza');
       return;
     }
+
+    // Mostrar confirmación con los datos
+    this.mensajeConfirmacion = 
+      `POSTULANTE\n` +
+      `${this.postulanteSeleccionado.apellidos_nombres}\n` +
+      `Orden de Mérito: ${this.postulanteSeleccionado.orden_merito}\n` +
+      `Grupo Ocupacional: ${this.postulanteSeleccionado.grupo_ocupacional}\n\n` +
+      `PLAZA ASIGNADA\n` +
+      `Red: ${this.plazaSeleccionada.red}\n` +
+      `IPRESS: ${this.plazaSeleccionada.ipress}\n` +
+      `Subunidad: ${this.plazaSeleccionada.subunidad || 'No especificada'}\n` +
+      `Especialidad: ${this.plazaSeleccionada.especialidad || 'No especificada'}`;
+    
+    this.iconoConfirmacion = 'assignment_turned_in';
+    this.accionConfirmacion = () => this.ejecutarAdjudicacion();
+    this.mostrarModalConfirmacion = true;
+  }
+
+  /**
+   * Ejecutar la adjudicación después de confirmar
+   */
+  ejecutarAdjudicacion() {
+    if (!this.postulanteSeleccionado || !this.plazaSeleccionada) return;
 
     this.loadingPostulantes = true;
     this.loadingPlazas = true;
@@ -914,8 +1575,6 @@ export class AppComponent implements OnInit {
       plazaId: this.plazaSeleccionada.id,
       observaciones: `Adjudicación manual - OM: ${this.postulanteSeleccionado.orden_merito} a ${this.plazaSeleccionada.red} - ${this.plazaSeleccionada.ipress}`
     };
-    
-    console.log('Realizando adjudicación:', adjudicacionData);
     
     this.apiService.adjudicar(adjudicacionData).subscribe({
       next: (response) => {
@@ -951,10 +1610,6 @@ export class AppComponent implements OnInit {
     this.plazasDisponibles = [];
     this.plazasFiltradasModal = [];
     this.plazaSeleccionada = null;
-    
-    // Limpiar filtros
-    this.filtroModalRed = '';
-    this.filtroModalIpress = '';
   }
 
   /**
@@ -962,133 +1617,261 @@ export class AppComponent implements OnInit {
    */
   seleccionarPlaza(plaza: PlazaConDisponibilidad) {
     this.plazaSeleccionada = plaza;
-    console.log('Plaza seleccionada:', plaza);
   }
 
-  /**
-   * Filtrar plazas en el modal
-   */
-  filtrarPlazasModal() {
-    console.log('Aplicando filtros modal:', {
-      red: this.filtroModalRed,
-      ipress: this.filtroModalIpress
-    });
 
-    this.plazasFiltradasModal = this.plazasDisponibles.filter(plaza => {
-      // Filtro por red
-      const cumpleRed = !this.filtroModalRed || 
-        plaza.red.toLowerCase().includes(this.filtroModalRed.toLowerCase());
-      
-      // Filtro por IPRESS
-      const cumpleIpress = !this.filtroModalIpress || 
-        plaza.ipress.toLowerCase().includes(this.filtroModalIpress.toLowerCase());
-      
-      return cumpleRed && cumpleIpress;
-    });
-
-    console.log(`Filtrado: ${this.plazasFiltradasModal.length} de ${this.plazasDisponibles.length} plazas`);
-    
-    // Si la plaza seleccionada ya no está en los resultados filtrados, deseleccionarla
-    if (this.plazaSeleccionada && 
-        !this.plazasFiltradasModal.find(p => p.id === this.plazaSeleccionada!.id)) {
-      this.plazaSeleccionada = null;
-    }
-  }
-
-  /**
-   * Limpiar todos los filtros del modal
-   */
-  limpiarFiltrosModal() {
-    this.filtroModalRed = '';
-    this.filtroModalIpress = '';
-    this.filtrarPlazasModal();
-  }
 
   /**
    * Recargar todos los datos (postulantes, plazas, etc.)
    */
   recargarDatos() {
-    console.log('Recargando todos los datos...');
+    // Verificar si hay filtros globales activos
+    const hayFiltrosGlobales = 
+      this.filtroGlobal.grupoOcupacionalId || 
+      this.filtroGlobal.estado || 
+      this.filtroGlobal.fechaRegistro;
     
-    // Recargar postulantes
-    this.cargarPostulantes();
+    // Recargar datos desde el backend
+    this.loadingPostulantes = true;
+    this.loadingPlazas = true;
     
-    // Recargar plazas  
-    this.cargarPlazas();
-    
-    // Si hay filtros activos, volver a aplicarlos después de un breve delay
-    setTimeout(() => {
-      if (this.filtroPlazas.redId || this.filtroPostulantes.grupoOcupacionalId) {
-        this.filtrarPlazas();
+    this.apiService.getPostulantesConEstado().subscribe({
+      next: (response: any) => {
+        const data = (response.data || response || []).slice().sort((a: any, b: any) => {
+          const ordenEstado: { [key: string]: number } = {
+            'pendiente': 1,
+            'adjudicado': 2,
+            'renuncio': 3,
+            'desistido': 4,
+            'ausente': 5
+          };
+          
+          const estadoA = ordenEstado[a.estado] || 999;
+          const estadoB = ordenEstado[b.estado] || 999;
+          
+          if (estadoA !== estadoB) {
+            return estadoA - estadoB;
+          }
+          
+          return (a.orden_merito || 0) - (b.orden_merito || 0);
+        });
+        
+        this.postulantesSinFiltrar = [...data];
+        
+        // Aplicar filtros si existen
+        if (hayFiltrosGlobales) {
+          this.aplicarFiltrosGlobales();
+        } else {
+          this.postulantes = data;
+        }
+        
+        this.extraerFechasDisponibles();
+        this.loadingPostulantes = false;
+      },
+      error: (error: any) => {
+        this.mostrarError('Error al recargar postulantes');
+        this.loadingPostulantes = false;
       }
-      if (this.filtroPostulantes.grupoOcupacionalId) {
-        this.filtrarPostulantes();
+    });
+    
+    this.apiService.getPlazasConDisponibilidad().subscribe({
+      next: (response: any) => {
+        const data = response.data || response || [];
+        this.plazasSinFiltrar = [...data];
+        
+        // Aplicar filtros si existen
+        if (hayFiltrosGlobales) {
+          this.aplicarFiltrosGlobales();
+        } else {
+          this.plazas = data;
+        }
+        
+        this.loadingPlazas = false;
+      },
+      error: (error: any) => {
+        this.mostrarError('Error al recargar plazas');
+        this.loadingPlazas = false;
       }
-    }, 1000); // Dar tiempo para que se recarguen los datos
+    });
   }
 
   /**
    * Marcar como desistido
    */
+  confirmarDesistir(postulante: PostulanteConEstado) {
+    if (this.loadingPostulantes) return;
+    
+    this.mensajeConfirmacion = 
+      `¿Marcar como DESISTIDO?\n\n` +
+      `POSTULANTE\n` +
+      `${postulante.apellidos_nombres}\n` +
+      `Orden de Mérito: ${postulante.orden_merito}\n` +
+      `Grupo Ocupacional: ${postulante.grupo_ocupacional}`;
+    this.iconoConfirmacion = 'cancel';
+    this.accionConfirmacion = () => this.desistir(postulante);
+    this.mostrarModalConfirmacion = true;
+  }
+
   desistir(postulante: PostulanteConEstado) {
-    if (confirm(`¿Está seguro de marcar como DESISTIDO a ${postulante.apellidos_nombres}?`)) {
-      this.apiService.desistir(postulante.id, { 
-        postulanteId: postulante.id,
-        observaciones: 'Desistimiento registrado desde frontend' 
-      }).subscribe({
-        next: (response) => {
-          this.mostrarExito('Postulante marcado como desistido');
-          this.cargarPostulantes();
-        },
-        error: (error) => {
-          console.error('Error al desistir:', error);
-          this.mostrarError('Error al registrar desistimiento');
-        }
-      });
-    }
+    if (this.loadingPostulantes) return; // Evitar múltiples clicks
+    
+    this.loadingPostulantes = true;
+    this.mostrarInfo('Marcando como desistido...');
+    this.apiService.desistir(postulante.id, { 
+      postulanteId: postulante.id,
+      observaciones: 'Desistimiento registrado desde frontend' 
+    }).subscribe({
+      next: (response) => {
+        this.mostrarExito('Postulante marcado como desistido');
+        this.recargarDatos();
+      },
+      error: (error) => {
+        console.error('Error al desistir:', error);
+        this.mostrarError('Error al registrar desistimiento');
+        this.loadingPostulantes = false;
+      }
+    });
   }
 
   /**
    * Marcar como renuncia
    */
+  confirmarRenuncia(postulante: PostulanteConEstado) {
+    if (this.loadingPostulantes) return;
+    
+    this.mensajeConfirmacion = 
+      `¿Registrar RENUNCIA?\n\n` +
+      `POSTULANTE\n` +
+      `${postulante.apellidos_nombres}\n` +
+      `Orden de Mérito: ${postulante.orden_merito}\n` +
+      `Grupo Ocupacional: ${postulante.grupo_ocupacional}\n\n` +
+      `IPRESS ADJUDICADA\n` +
+      `${postulante.ipress_adjudicada || 'No especificada'}`;
+    this.iconoConfirmacion = 'exit_to_app';
+    this.accionConfirmacion = () => this.renunciar(postulante);
+    this.mostrarModalConfirmacion = true;
+  }
+
   renunciar(postulante: PostulanteConEstado) {
-    if (confirm(`¿Está seguro de registrar la RENUNCIA de ${postulante.apellidos_nombres}?`)) {
-      this.apiService.renunciar(postulante.id, { 
-        postulanteId: postulante.id,
-        observaciones: 'Renuncia registrada desde frontend' 
-      }).subscribe({
-        next: (response) => {
-          this.mostrarExito('Renuncia registrada exitosamente');
-          this.cargarPostulantes();
-          this.cargarPlazas(); // Actualizar disponibilidad
-        },
-        error: (error) => {
-          console.error('Error al renunciar:', error);
-          this.mostrarError('Error al registrar renuncia');
-        }
-      });
-    }
+    if (this.loadingPostulantes) return; // Evitar múltiples clicks
+    
+    this.loadingPostulantes = true;
+    this.mostrarInfo('Registrando renuncia...');
+    this.apiService.renunciar(postulante.id, { 
+      postulanteId: postulante.id,
+      observaciones: 'Renuncia registrada desde frontend' 
+    }).subscribe({
+      next: (response) => {
+        this.mostrarExito('Renuncia registrada exitosamente');
+        this.recargarDatos();
+      },
+      error: (error) => {
+        console.error('Error al renunciar:', error);
+        this.mostrarError('Error al registrar renuncia');
+        this.loadingPostulantes = false;
+      }
+    });
   }
 
   /**
    * Marcar como ausente
    */
+  confirmarAusente(postulante: PostulanteConEstado) {
+    if (this.loadingPostulantes) return;
+    
+    this.mensajeConfirmacion = 
+      `¿Marcar como AUSENTE?\n\n` +
+      `POSTULANTE\n` +
+      `${postulante.apellidos_nombres}\n` +
+      `Orden de Mérito: ${postulante.orden_merito}\n` +
+      `Grupo Ocupacional: ${postulante.grupo_ocupacional}`;
+    this.iconoConfirmacion = 'person_off';
+    this.accionConfirmacion = () => this.marcarAusente(postulante);
+    this.mostrarModalConfirmacion = true;
+  }
+
   marcarAusente(postulante: PostulanteConEstado) {
-    if (confirm(`¿Está seguro de marcar como AUSENTE a ${postulante.apellidos_nombres}?`)) {
-      this.apiService.marcarAusente(postulante.id, { 
-        postulanteId: postulante.id,
-        observaciones: 'Ausente registrado desde frontend' 
-      }).subscribe({
-        next: (response) => {
-          this.mostrarExito('Postulante marcado como ausente exitosamente');
-          this.cargarPostulantes();
-        },
-        error: (error) => {
-          console.error('Error al marcar ausente:', error);
-          this.mostrarError('Error al registrar ausencia');
-        }
-      });
+    if (this.loadingPostulantes) return; // Evitar múltiples clicks
+    
+    this.loadingPostulantes = true;
+    this.mostrarInfo('Marcando como ausente...');
+    this.apiService.marcarAusente(postulante.id, { 
+      postulanteId: postulante.id,
+      observaciones: 'Ausente registrado desde frontend' 
+    }).subscribe({
+      next: (response) => {
+        this.mostrarExito('Postulante marcado como ausente exitosamente');
+        this.recargarDatos();
+      },
+      error: (error) => {
+        console.error('Error al marcar ausente:', error);
+        this.mostrarError('Error al registrar ausencia');
+        this.loadingPostulantes = false;
+      }
+    });
+  }
+
+  /**
+   * Confirmar acción del modal
+   */
+  confirmarAccion() {
+    this.mostrarModalConfirmacion = false;
+    if (this.accionConfirmacion) {
+      this.accionConfirmacion();
+      this.accionConfirmacion = null;
     }
+  }
+
+  /**
+   * Cancelar acción del modal
+   */
+  cancelarAccion() {
+    this.mostrarModalConfirmacion = false;
+    this.mensajeConfirmacion = '';
+    this.iconoConfirmacion = 'info';
+    this.accionConfirmacion = null;
+  }
+
+  /**
+   * Confirmar reasignación
+   */
+  confirmarReasignar(postulante: PostulanteConEstado) {
+    if (this.loadingPostulantes) return;
+    
+    this.mensajeConfirmacion = 
+      `¿Reasignar a PENDIENTE?\n\n` +
+      `POSTULANTE\n` +
+      `${postulante.apellidos_nombres}\n` +
+      `Orden de Mérito: ${postulante.orden_merito}\n` +
+      `Grupo Ocupacional: ${postulante.grupo_ocupacional}\n` +
+      `Estado Actual: ${postulante.estado.toUpperCase()}`;
+    this.iconoConfirmacion = 'replay';
+    this.accionConfirmacion = () => this.reasignar(postulante);
+    this.mostrarModalConfirmacion = true;
+  }
+
+  /**
+   * Reasignar postulante - cambiar estado a pendiente
+   */
+  reasignar(postulante: PostulanteConEstado) {
+    if (this.loadingPostulantes) return;
+    
+    this.loadingPostulantes = true;
+    this.mostrarInfo('Reasignando postulante...');
+    this.apiService.reasignar(postulante.id, { 
+      postulanteId: postulante.id,
+      observaciones: 'Reasignado a pendiente desde frontend' 
+    }).subscribe({
+      next: (response) => {
+        this.mostrarExito('Postulante reasignado exitosamente. Estado cambiado a Pendiente');
+        this.recargarDatos();
+      },
+      error: (error) => {
+        console.error('Error al reasignar:', error);
+        this.mostrarError('Error al reasignar postulante');
+        this.loadingPostulantes = false;
+      }
+    });
   }
 
   /**

@@ -58,20 +58,20 @@ const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100, message = null) =
     });
 };
 
-// Rate limits específicos
+// Rate limits específicos - configuración generosa para desarrollo
 const rateLimits = {
     general: createRateLimit(
-        parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-        parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100
+        parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minuto
+        parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000 // 1000 requests por minuto
     ),
     auth: createRateLimit(
         15 * 60 * 1000, // 15 minutos
-        5, // 5 intentos
+        10, // 10 intentos (aumentado de 5)
         'Demasiados intentos de autenticación. Intente más tarde.'
     ),
     api: createRateLimit(
         60 * 1000, // 1 minuto
-        30, // 30 requests por minuto
+        500, // 500 requests por minuto (aumentado de 30)
         'Límite de API excedido. Intente más tarde.'
     )
 };

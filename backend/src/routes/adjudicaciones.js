@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const Joi = require('joi');
 const { AdjudicacionController } = require('../controllers');
 const { 
     validate, 
@@ -9,6 +10,11 @@ const {
     commonSchemas, 
     asyncHandler 
 } = require('../middleware');
+
+// Schema para validar ID en params
+const idParamSchema = Joi.object({
+    postulanteId: Joi.number().integer().positive().required()
+});
 
 // Instanciar controlador
 const adjudicacionController = new AdjudicacionController();
@@ -162,9 +168,7 @@ router.post('/masiva',
  * @access  Public (en producción debería requerir autenticación)
  */
 router.post('/desistir/:postulanteId', 
-    validateParams({
-        postulanteId: commonSchemas.id.extract('id').required()
-    }),
+    validateParams(idParamSchema),
     validate(schemas.adjudicacion.desistir),
     asyncHandler(adjudicacionController.marcarDesistido.bind(adjudicacionController))
 );
@@ -175,9 +179,7 @@ router.post('/desistir/:postulanteId',
  * @access  Public (en producción debería requerir autenticación)
  */
 router.post('/renuncia/:postulanteId', 
-    validateParams({
-        postulanteId: commonSchemas.id.extract('id').required()
-    }),
+    validateParams(idParamSchema),
     validate(schemas.adjudicacion.renuncia),
     asyncHandler(adjudicacionController.marcarRenuncia.bind(adjudicacionController))
 );
@@ -188,11 +190,20 @@ router.post('/renuncia/:postulanteId',
  * @access  Public (en producción debería requerir autenticación)
  */
 router.post('/ausente/:postulanteId', 
-    validateParams({
-        postulanteId: commonSchemas.id.extract('id').required()
-    }),
+    validateParams(idParamSchema),
     validate(schemas.adjudicacion.desistir),
     asyncHandler(adjudicacionController.marcarAusente.bind(adjudicacionController))
+);
+
+/**
+ * @route   POST /api/adjudicaciones/reasignar/:postulanteId
+ * @desc    Reasignar postulante - cambiar estado a pendiente
+ * @access  Public (en producción debería requerir autenticación)
+ */
+router.post('/reasignar/:postulanteId', 
+    validateParams(idParamSchema),
+    validate(schemas.adjudicacion.desistir),
+    asyncHandler(adjudicacionController.reasignar.bind(adjudicacionController))
 );
 
 /**

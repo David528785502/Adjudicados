@@ -70,7 +70,7 @@ CREATE INDEX idx_plazas_grupo ON plazas(grupo_ocupacional_id);
 -- ============================================================================
 CREATE TABLE postulantes (
     id SERIAL PRIMARY KEY,
-    orden_merito INTEGER NOT NULL UNIQUE CHECK (orden_merito > 0),
+    orden_merito INTEGER NOT NULL,
     apellidos VARCHAR(200) NOT NULL,
     nombres VARCHAR(200) NOT NULL,
     grupo_ocupacional_id INTEGER NOT NULL REFERENCES grupos_ocupacionales(id) ON DELETE RESTRICT,

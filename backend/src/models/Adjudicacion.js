@@ -233,6 +233,68 @@ class Adjudicacion extends BaseModel {
     }
 
     /**
+     * Reasignar postulante - cambiar estado a pendiente
+     */
+    async reasignar(postulanteId, observaciones = null) {
+        const client = await getClient();
+        
+        try {
+            await client.query('BEGIN');
+            
+            // Verificar que el postulante existe
+            const postulante = await client.query(
+                'SELECT * FROM postulantes WHERE id = $1',
+                [postulanteId]
+            );
+            
+            if (postulante.rows.length === 0) {
+                throw new Error('Postulante no encontrado');
+            }
+            
+            // Obtener adjudicación actual
+            const adjudicacionActual = await client.query(
+                'SELECT * FROM adjudicaciones WHERE postulante_id = $1',
+                [postulanteId]
+            );
+            
+            if (adjudicacionActual.rows.length === 0) {
+                throw new Error('No hay adjudicación registrada para este postulante');
+            }
+            
+            const estadoActual = adjudicacionActual.rows[0].estado;
+            
+            // Validar que el estado actual permite reasignar
+            if (!['desistido', 'ausente', 'renuncio'].includes(estadoActual)) {
+                throw new Error(`No se puede reasignar desde el estado: ${estadoActual}`);
+            }
+            
+            // Cambiar estado a pendiente y limpiar datos de adjudicación
+            // Nota: No es necesario actualizar la tabla plazas porque los asignados 
+            // se calculan dinámicamente en la vista plazas_con_disponibilidad
+            const resultado = await client.query(`
+                UPDATE adjudicaciones 
+                SET estado = 'pendiente',
+                    plaza_id = NULL,
+                    fecha_adjudicacion = NULL,
+                    fecha_desistimiento = NULL,
+                    observaciones = $1,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE postulante_id = $2
+                RETURNING *
+            `, [observaciones, postulanteId]);
+            
+            await client.query('COMMIT');
+            return resultado.rows[0];
+            
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
      * Validar si se puede realizar una adjudicación
      */
     async validarAdjudicacion(postulanteId, plazaId) {

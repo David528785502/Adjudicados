@@ -201,6 +201,13 @@ export class ApiService {
   }
 
   /**
+   * Reasignar postulante - cambiar estado a pendiente
+   */
+  reasignar(postulanteId: number, request: RequestDesistir): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.apiUrl}/adjudicaciones/reasignar/${postulanteId}`, request);
+  }
+
+  /**
    * Obtener adjudicaciones
    */
   getAdjudicaciones(): Observable<ApiResponse<Adjudicacion[]>> {

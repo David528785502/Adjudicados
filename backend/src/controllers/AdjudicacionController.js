@@ -74,6 +74,22 @@ class AdjudicacionController extends BaseController {
     }
 
     /**
+     * Reasignar postulante - cambiar estado a pendiente
+     */
+    async reasignar(req, res) {
+        try {
+            const { postulanteId } = req.params;
+            const { observaciones } = req.body;
+            
+            const result = await this.model.reasignar(postulanteId, observaciones);
+            this.sendSuccess(res, result, 'Postulante reasignado exitosamente. Estado cambiado a pendiente');
+        } catch (error) {
+            console.error('Error en reasignar:', error);
+            this.sendError(res, 'Error al reasignar postulante', error, 400);
+        }
+    }
+
+    /**
      * Validar si se puede realizar una adjudicación
      */
     async validarAdjudicacion(req, res) {

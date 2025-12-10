@@ -19,10 +19,10 @@ const app = express();
 // Configuración básica
 const PORT = process.env.PORT || 3000;
 
-// Rate limiting
+// Rate limiting - configuración flexible para desarrollo
 const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 100, // Límite de 100 solicitudes por ventana
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minuto por defecto
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 1000, // 1000 solicitudes por ventana (muy generoso para desarrollo)
     message: {
         error: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde.',
         code: 'RATE_LIMIT_EXCEEDED',
@@ -83,8 +83,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// Rate limiting
-app.use(limiter);
+// Rate limiting - DESHABILITADO PARA DESARROLLO
+// app.use(limiter);
 
 // Compresión
 app.use(compression());
