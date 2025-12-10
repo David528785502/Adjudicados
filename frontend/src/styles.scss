@@ -153,7 +153,7 @@ html, body {
   display: flex;
   justify-content: flex-start;
   gap: 15px;
-  margin-top: 20px;
+  margin-top: 0px;
   padding: 0 10px;
   
   @media (max-width: 768px) {
@@ -252,7 +252,7 @@ html, body {
 .filters-container {
   display: flex;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
   flex-wrap: wrap;
   
   .mat-mdc-form-field {
@@ -266,9 +266,9 @@ html, body {
 .app-header {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
   color: white;
-  padding: 15px;
+  padding: 10px;
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 0px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   
   h1 {

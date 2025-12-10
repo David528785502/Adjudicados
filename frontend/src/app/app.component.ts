@@ -839,7 +839,7 @@ import {
     .global-filters {
       background: white;
       padding: 20px 24px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
