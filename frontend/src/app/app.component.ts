@@ -2310,7 +2310,7 @@ export class AppComponent implements OnInit {
           // Agregar imagen del bottom con ancho proporcional
           const bottomWidth = 80; // Ancho fijo más pequeño
           const bottomHeight = 20; // Altura restaurada
-          const bottomX = (pageWidth - bottomWidth) / 2; // Centrar horizontalmente
+          const bottomX = 21; // Centrar horizontalmente
           doc.addImage(bottomImg, 'PNG', bottomX, footerY, bottomWidth, bottomHeight);
         } catch (e) {
           console.warn('Error al agregar imagen bottom al PDF:', e);
