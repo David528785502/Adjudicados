@@ -866,7 +866,7 @@ import jsPDF from 'jspdf';
 
     .filters-row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: flex-end;
       flex-wrap: wrap;
       justify-content: flex-start;
@@ -874,14 +874,15 @@ import jsPDF from 'jspdf';
 
     .filters-row mat-form-field {
       flex: 1 1 auto;
-      min-width: 160px;
-      max-width: 250px;
+      min-width: 140px;
+      max-width: 220px;
     }
 
     .filters-row > button {
       height: 56px;
       margin-bottom: 22px;
       flex-shrink: 0;
+      padding: 0 20px;
     }
 
     /* Upload Section */
@@ -897,7 +898,7 @@ import jsPDF from 'jspdf';
       background-color: #4caf50 !important;
       color: white !important;
       font-weight: 500;
-      padding: 0 24px;
+      padding: 0 20px;
       box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
       white-space: nowrap;
     }
@@ -913,9 +914,9 @@ import jsPDF from 'jspdf';
 
     /* Calendario personalizado */
     .fecha-filter-wrapper {
-      flex: 1 1 auto;
-      min-width: 160px;
-      max-width: 250px;
+      flex: 0.8 1 auto;
+      min-width: 130px;
+      max-width: 200px;
       position: relative;
     }
 
