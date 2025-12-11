@@ -455,18 +455,15 @@ import jsPDF from 'jspdf';
     </div>
 
     <!-- Modal de Confirmación -->
-    <div class="modal-backdrop" *ngIf="mostrarModalConfirmacion" (click)="cancelarAccion()">
+    <div class="modal-backdrop" *ngIf="mostrarModalConfirmacion">
       <div class="modal-content confirmation-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h2>Confirmar Acción</h2>
-          <button mat-icon-button (click)="cancelarAccion()">
-            <mat-icon>close</mat-icon>
-          </button>
         </div>
 
         <div class="modal-body">
           <div class="confirmation-message">
-            <mat-icon class="warning-icon">{{iconoConfirmacion}}</mat-icon>
+            <mat-icon class="warning-icon" [class.warning]="iconoConfirmacion === 'warning'">{{iconoConfirmacion}}</mat-icon>
             <div class="message-content">
               <pre>{{mensajeConfirmacion}}</pre>
             </div>
@@ -475,19 +472,12 @@ import jsPDF from 'jspdf';
 
         <div class="modal-footer">
           <button 
-            mat-stroked-button 
-            class="cancel-button"
-            (click)="cancelarAccion()">
-            <mat-icon>close</mat-icon>
-            Cancelar
-          </button>
-          <button 
             mat-raised-button 
             color="primary"
             class="confirm-button"
             (click)="confirmarAccion()">
             <mat-icon>check_circle</mat-icon>
-            Confirmar
+            Aceptar
           </button>
         </div>
       </div>
@@ -819,6 +809,10 @@ import jsPDF from 'jspdf';
       width: 72px;
       height: 72px;
       color: #1976d2;
+    }
+
+    .warning-icon.warning {
+      color: #ff9800 !important;
     }
 
     .message-content {
@@ -1591,6 +1585,15 @@ export class AppComponent implements OnInit {
     this.loadingPostulantes = true;
     this.loadingPlazas = true;
     
+    // Guardar información de la plaza antes de la adjudicación
+    const plazaAdjudicada = {
+      id: this.plazaSeleccionada.id,
+      red: this.plazaSeleccionada.red,
+      ipress: this.plazaSeleccionada.ipress,
+      subunidad: this.plazaSeleccionada.subunidad,
+      libresAntes: this.plazaSeleccionada.libres
+    };
+    
     const adjudicacionData: RequestAdjudicar = {
       postulanteId: this.postulanteSeleccionado.id,
       plazaId: this.plazaSeleccionada.id,
@@ -1600,13 +1603,35 @@ export class AppComponent implements OnInit {
     this.apiService.adjudicar(adjudicacionData).subscribe({
       next: (response) => {
         if (response.success) {
-          this.mostrarExito(`${this.postulanteSeleccionado!.apellidos_nombres} adjudicado exitosamente a ${this.plazaSeleccionada!.red} - ${this.plazaSeleccionada!.ipress}`);
+          this.mostrarExito(`${this.postulanteSeleccionado!.apellidos_nombres} adjudicado exitosamente a ${plazaAdjudicada.red} - ${plazaAdjudicada.ipress}`);
           
           // Cerrar modal
           this.cerrarModalAdjudicacion();
           
-          // Recargar datos
-          this.recargarDatos();
+          // Verificar si la plaza se agotó (tenía solo 1 libre antes de esta adjudicación)
+          if (plazaAdjudicada.libresAntes === 1) {
+            // La plaza se acaba de agotar
+            // Resetear los flags de carga antes de mostrar el modal
+            this.loadingPostulantes = false;
+            this.loadingPlazas = false;
+            
+            this.mensajeConfirmacion = 
+              `PLAZA AGOTADA\n\n` +
+              `La plaza ha sido completamente ocupada:\n\n` +
+              `Red: ${plazaAdjudicada.red}\n` +
+              `IPRESS: ${plazaAdjudicada.ipress}\n` +
+              `Subunidad: ${plazaAdjudicada.subunidad || 'No especificada'}\n\n` +
+              `Ya no quedan cupos disponibles en esta plaza.`;
+            this.iconoConfirmacion = 'warning';
+            this.accionConfirmacion = () => {
+              // Solo recargar datos después de que el usuario acepte
+              this.recargarDatos();
+            };
+            this.mostrarModalConfirmacion = true;
+          } else {
+            // Recargar datos inmediatamente si aún quedan cupos
+            this.recargarDatos();
+          }
         } else {
           this.mostrarError(`Error en adjudicación: ${response.message || 'Error desconocido'}`);
           this.loadingPostulantes = false;
