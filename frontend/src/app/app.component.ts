@@ -472,6 +472,14 @@ import jsPDF from 'jspdf';
 
         <div class="modal-footer">
           <button 
+            *ngIf="iconoConfirmacion !== 'warning'"
+            mat-stroked-button 
+            class="cancel-button"
+            (click)="cancelarAccion()">
+            <mat-icon>close</mat-icon>
+            Cancelar
+          </button>
+          <button 
             mat-raised-button 
             color="primary"
             class="confirm-button"
