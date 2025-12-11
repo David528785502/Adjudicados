@@ -873,20 +873,22 @@ import jsPDF from 'jspdf';
     }
 
     .filters-row mat-form-field {
-      flex: 1;
-      min-width: 180px;
+      flex: 1 1 auto;
+      min-width: 160px;
       max-width: 250px;
     }
 
     .filters-row > button {
       height: 56px;
       margin-bottom: 22px;
+      flex-shrink: 0;
     }
 
     /* Upload Section */
     .upload-section {
       display: flex;
       align-items: flex-end;
+      flex-shrink: 0;
     }
 
     .upload-button {
@@ -897,6 +899,7 @@ import jsPDF from 'jspdf';
       font-weight: 500;
       padding: 0 24px;
       box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+      white-space: nowrap;
     }
 
     .upload-button:hover {
@@ -910,14 +913,15 @@ import jsPDF from 'jspdf';
 
     /* Calendario personalizado */
     .fecha-filter-wrapper {
-      flex: 1;
-      min-width: 180px;
+      flex: 1 1 auto;
+      min-width: 160px;
       max-width: 250px;
       position: relative;
     }
 
     .fecha-filter-wrapper mat-form-field {
       cursor: pointer;
+      width: 100%;
     }
 
     .fecha-filter-wrapper input {
