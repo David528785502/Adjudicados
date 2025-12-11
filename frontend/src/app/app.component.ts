@@ -2271,14 +2271,15 @@ export class AppComponent implements OnInit {
       // Nombre del postulante (MAYÚSCULAS, NEGRITA, CENTRADO)
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(17);
+      const maxWidth = pageWidth - marginLeft - marginRight;
       const nombreCompleto = postulante.apellidos_nombres.toUpperCase();
-      doc.text(nombreCompleto, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 12;
+      const lineasNombre = doc.splitTextToSize(nombreCompleto, maxWidth);
+      doc.text(lineasNombre, pageWidth / 2, yPos, { align: 'center' });
+      yPos += (lineasNombre.length * 6) + 6;
 
       // Párrafo de beneficiario
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(13);
-      const maxWidth = pageWidth - marginLeft - marginRight;
       
       const cargo = postulante.grupo_ocupacional || 'CARGO NO ESPECIFICADO';
       const red = postulante.red_adjudicada || 'RED NO ESPECIFICADA';
