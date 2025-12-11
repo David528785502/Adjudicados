@@ -52,6 +52,7 @@ class Plaza extends BaseModel {
                     v.red,
                     v.ipress,
                     v.grupo_ocupacional,
+                    v.subunidad,
                     v.especialidad,
                     v.total,
                     v.asignados,

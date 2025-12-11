@@ -194,6 +194,14 @@ import jsPDF from 'jspdf';
                 </td>
               </ng-container>
 
+              <!-- Columna Grupo Ocupacional -->
+              <ng-container matColumnDef="grupo_ocupacional">
+                <th mat-header-cell *matHeaderCellDef>Grupo Ocupacional</th>
+                <td mat-cell *matCellDef="let postulante">
+                  {{postulante.grupo_ocupacional || '-'}}
+                </td>
+              </ng-container>
+
               <!-- Columna IPRESS Adjudicada -->
               <ng-container matColumnDef="ipress">
                 <th mat-header-cell *matHeaderCellDef>IPRESS</th>
@@ -296,12 +304,6 @@ import jsPDF from 'jspdf';
                 <td mat-cell *matCellDef="let plaza">{{plaza.subunidad || '-'}}</td>
               </ng-container>
 
-              <!-- Columna Especialidad -->
-              <ng-container matColumnDef="especialidad">
-                <th mat-header-cell *matHeaderCellDef>Especialidad</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.especialidad || '-'}}</td>
-              </ng-container>
-
               <!-- Columna Total -->
               <ng-container matColumnDef="total">
                 <th mat-header-cell *matHeaderCellDef>Total</th>
@@ -387,10 +389,10 @@ import jsPDF from 'jspdf';
                 
                 <div class="plaza-content">
                   <div class="plaza-primary">
-                    <div class="plaza-red">
-                      <mat-icon class="location-icon">location_on</mat-icon>
-                      <span class="red-name">{{plaza.red}}</span>
-                    </div>
+                      <div class="plaza-red">
+                        <mat-icon class="location-icon">location_on</mat-icon>
+                        <span class="red-name">{{plaza.red}}</span>
+                      </div>
                     <div class="plaza-libres">
                       <span class="libres-number">{{plaza.libres}}</span>
                       <span class="libres-text">{{plaza.libres === 1 ? 'libre' : 'libres'}}</span>
@@ -1039,8 +1041,8 @@ export class AppComponent implements OnInit {
   uploadingFile = false;
 
   // Columnas de las tablas
-  columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'ipress', 'acciones'];
-  columnasPlazas: string[] = ['red', 'ipress', 'subunidad', 'especialidad', 'total', 'asignados', 'libres'];
+  columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'ipress', 'acciones'];
+  columnasPlazas: string[] = ['red', 'ipress', 'subunidad', 'total', 'asignados', 'libres'];
 
   // Filtros
   filtroPostulantes: FiltroPostulantes = {};

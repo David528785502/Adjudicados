@@ -38,7 +38,7 @@ html, body {
 /* Layout de 2 columnas */
 .tables-container {
   display: grid;
-  grid-template-columns: 42% 58%;
+  grid-template-columns: 50% 50%;
   gap: 0;
   margin-bottom: 10px;
   width: 100%;
@@ -75,7 +75,7 @@ html, body {
 /* Estilos para las tablas */
 .mat-mdc-table {
   width: 100% !important;
-  table-layout: auto !important; /* Cambiar a auto para mejor distribución */
+  table-layout: fixed !important;
   
   .mat-mdc-header-cell {
     background-color: var(--primary-color) !important;
@@ -84,8 +84,9 @@ html, body {
     font-size: 12px !important;
     padding: 10px 6px !important;
     word-wrap: break-word;
-    text-align: center !important; /* Centrar encabezados */
-    white-space: normal !important; /* Permitir saltos de línea */
+    text-align: center !important;
+    justify-content: center !important;
+    white-space: normal !important;
     line-height: 1.3;
     vertical-align: middle !important;
   }
@@ -96,9 +97,11 @@ html, body {
     font-size: 12px !important;
     padding: 8px 6px !important;
     word-wrap: break-word;
-    white-space: normal !important; /* Permitir saltos de línea en celdas */
+    white-space: normal !important;
     line-height: 1.4;
     vertical-align: middle !important;
+    text-align: center !important;
+    justify-content: center !important;
   }
   
   .mat-mdc-header-row {
@@ -127,23 +130,28 @@ html, body {
 /* Botones de acción */
 .action-buttons {
   display: flex;
-  flex-direction: column; /* Siempre en vertical */
-  gap: 6px;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 0;
+  width: 100%;
   
   .mat-mdc-button,
   .mat-mdc-raised-button {
-    min-width: 100% !important;
-    font-size: 11px !important;
-    padding: 4px 8px !important;
-    height: 32px !important;
-    line-height: 32px !important;
+    width: auto !important;
+    max-width: 140px !important;
+    min-width: 120px !important;
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    height: 28px !important;
+    line-height: 28px !important;
+    white-space: nowrap !important;
     
     .mat-icon {
-      font-size: 16px !important;
-      width: 16px !important;
-      height: 16px !important;
-      margin-right: 4px !important;
+      font-size: 14px !important;
+      width: 14px !important;
+      height: 14px !important;
+      margin-right: 3px !important;
     }
   }
 }
@@ -330,77 +338,63 @@ html, body {
 .mat-column-total,
 .mat-column-asignados,
 .mat-column-libres {
-  text-align: center !important;
-  justify-content: center !important;
-  width: 70px !important;
-  max-width: 70px !important;
+  width: 10% !important;
 }
 
 /* Anchos específicos para columnas de Plazas */
 .mat-column-red {
-  width: 100px !important;
-  max-width: 100px !important;
-  text-align: center !important;
+  width: 20% !important;
 }
 
 .mat-column-grupo {
-  width: 140px !important;
-  min-width: 140px !important;
-  text-align: center !important;
+  width: 20% !important;
 }
 
 .mat-column-subunidad {
-  width: 130px !important;
-  min-width: 130px !important;
-  text-align: center !important;
-}
-
-.mat-column-especialidad {
-  width: 130px !important;
-  min-width: 130px !important;
-  text-align: center !important;
+  width: 30% !important;
 }
 
 /* Columnas de postulantes centradas verticalmente */
 .mat-column-orden,
 .mat-column-nombres,
 .mat-column-estado,
+.mat-column-grupo_ocupacional,
 .mat-column-ipress {
   vertical-align: middle !important;
 }
 
-/* Columnas centradas vertical y horizontalmente */
-.mat-column-orden,
-.mat-column-estado,
-.mat-column-ipress {
-  text-align: center !important;
-  justify-content: center !important;
-}
-
 /* Anchos específicos para columnas de Postulantes */
 .mat-column-orden {
-  width: 50px !important;
-  max-width: 50px !important;
+  width: 7% !important;
+  white-space: nowrap !important;
 }
 
 .mat-column-estado {
-  width: 90px !important;
-  max-width: 90px !important;
+  width: 12% !important;
+  white-space: nowrap !important;
+}
+
+.mat-column-grupo_ocupacional {
+  width: 15% !important;
+  white-space: normal !important;
 }
 
 .mat-column-ipress {
-  width: 180px !important;
-  min-width: 180px !important;
+  width: 18% !important;
+  white-space: normal !important;
 }
 
 .mat-column-nombres {
-  width: auto !important;
-  min-width: 150px !important;
+  width: 24% !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  padding-left: 12px !important;
+  white-space: normal !important;
 }
 
 .mat-column-acciones {
-  width: 120px !important;
-  max-width: 120px !important;
+  width: 24% !important;
+  overflow: visible !important;
 }
 
 /* Badges */
