@@ -2254,10 +2254,11 @@ export class AppComponent implements OnInit {
       const maxWidth = pageWidth - marginLeft - marginRight;
       
       const cargo = postulante.grupo_ocupacional || 'CARGO NO ESPECIFICADO';
-      const especialidad = postulante.especialidad_adjudicada || 'GENERAL';
+      const red = postulante.red_adjudicada || 'RED NO ESPECIFICADA';
       const ipress = postulante.ipress_adjudicada || 'IPRESS NO ESPECIFICADA';
+      const subunidad = postulante.subunidad_adjudicada || 'SUBUNIDAD NO ESPECIFICADA';
       
-      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${cargo.toUpperCase()} en la especialidad ${especialidad.toUpperCase()} en la ${ipress.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
+      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${cargo.toUpperCase()} en la Red ${red.toUpperCase()} asignado(a) a ${ipress.toUpperCase()} y a la Subunidad ${subunidad.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
       
       const lineasBeneficiario = doc.splitTextToSize(textoBeneficiario, maxWidth);
       doc.text(lineasBeneficiario, marginLeft, yPos, { align: 'justify', maxWidth: maxWidth });
