@@ -2102,25 +2102,20 @@ export class AppComponent implements OnInit {
       'Estado': p.estado?.toUpperCase() || '',
       'RED': p.red_adjudicada || '',
       'IPRESS': p.ipress_adjudicada || '',
-      'Sub Unidad': p.subunidad_adjudicada || '',
-      'Especialidad': p.especialidad_adjudicada || ''
+      'Sub Unidad': p.subunidad_adjudicada || ''
     }));
 
     // Crear libro de trabajo
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosExcel);
 
-    // Estilo para las cabeceras (profesional)
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    
     // Aplicar ancho de columnas
     ws['!cols'] = [
-      { wch: 35 }, // Apellidos y Nombres
+      { wch: 50 }, // Apellidos y Nombres
       { wch: 25 }, // Grupo Ocupacional
       { wch: 12 }, // Estado
       { wch: 20 }, // RED
       { wch: 30 }, // IPRESS
-      { wch: 20 }, // Sub Unidad
-      { wch: 25 }  // Especialidad
+      { wch: 20 }  // Sub Unidad
     ];
 
     // Crear el libro
