@@ -74,6 +74,7 @@ CREATE TABLE postulantes (
     apellidos VARCHAR(200) NOT NULL,
     nombres VARCHAR(200) NOT NULL,
     grupo_ocupacional_id INTEGER NOT NULL REFERENCES grupos_ocupacionales(id) ON DELETE RESTRICT,
+    especialidad VARCHAR(120),
     fecha_registro TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -116,6 +117,7 @@ SELECT
     p.nombres,
     p.grupo_ocupacional_id,
     go.nombre AS grupo_ocupacional,
+    p.especialidad,
     p.fecha_registro,
     COALESCE(adj.estado, 'pendiente') AS estado,
     r.nombre AS red_adjudicada,

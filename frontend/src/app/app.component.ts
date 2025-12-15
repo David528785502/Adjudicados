@@ -69,6 +69,18 @@ import jsPDF from 'jspdf';
             </mat-select>
           </mat-form-field>
 
+          <mat-form-field appearance="outline">
+            <mat-label>Subunidad</mat-label>
+            <mat-select [(value)]="filtroGlobal.subunidades" 
+                       (selectionChange)="aplicarFiltrosGlobales()"
+                       multiple>
+              <mat-option [value]="undefined" (click)="limpiarSubunidades()">Todas</mat-option>
+              <mat-option *ngFor="let subunidad of subunidadesDisponibles" [value]="subunidad">
+                {{subunidad}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
           <div class="fecha-filter-wrapper" (click)="$event.stopPropagation()">
             <mat-form-field appearance="outline" (click)="toggleCalendario()">
               <mat-label>Fecha de Registro</mat-label>
@@ -182,8 +194,6 @@ import jsPDF from 'jspdf';
                 <td mat-cell *matCellDef="let postulante">{{postulante.apellidos_nombres}}</td>
               </ng-container>
 
-              <!-- DNI removed: not available in dataset -->
-
               <!-- Columna Estado -->
               <ng-container matColumnDef="estado">
                 <th mat-header-cell *matHeaderCellDef>Estado</th>
@@ -198,7 +208,7 @@ import jsPDF from 'jspdf';
               <ng-container matColumnDef="grupo_ocupacional">
                 <th mat-header-cell *matHeaderCellDef>Grupo Ocupacional</th>
                 <td mat-cell *matCellDef="let postulante">
-                  {{postulante.grupo_ocupacional || '-'}}
+                  {{postulante.especialidad || '-'}}
                 </td>
               </ng-container>
 
@@ -1060,8 +1070,10 @@ export class AppComponent implements OnInit {
     grupoOcupacionalId?: number;
     fechaRegistro?: string;
     estado?: EstadoAdjudicacion;
+    subunidades?: string[];
   } = {};
   fechasDisponibles: string[] = [];
+  subunidadesDisponibles: string[] = [];
   postulantesSinFiltrar: PostulanteConEstado[] = [];
   plazasSinFiltrar: PlazaConDisponibilidad[] = [];
 
@@ -1242,6 +1254,10 @@ export class AppComponent implements OnInit {
         // Guardar copia sin filtrar
         this.plazasSinFiltrar = [...data];
         this.plazas = data;
+        
+        // Extraer subunidades únicas disponibles
+        this.extraerSubunidadesDisponibles();
+        
         this.loadingPlazas = false;
       },
       error: (error: any) => {
@@ -1354,6 +1370,18 @@ export class AppComponent implements OnInit {
         this.loadingPlazas = false;
       }
     });
+  }
+
+  /**
+   * Extraer subunidades únicas de plazas
+   */
+  extraerSubunidadesDisponibles() {
+    const subunidadesSet = new Set<string>();
+    this.plazasSinFiltrar.forEach(p => {
+      const subunidad = p.subunidad || '-';
+      subunidadesSet.add(subunidad);
+    });
+    this.subunidadesDisponibles = Array.from(subunidadesSet).sort();
   }
 
   /**
@@ -1478,7 +1506,7 @@ export class AppComponent implements OnInit {
    * Aplicar filtros globales a ambas tablas
    */
   aplicarFiltrosGlobales() {
-    // Filtrar postulantes
+    // Filtrar postulantes (solo grupo ocupacional, fecha y estado)
     let postulantesFiltrados = [...this.postulantesSinFiltrar];
     
     if (this.filtroGlobal.grupoOcupacionalId) {
@@ -1504,13 +1532,17 @@ export class AppComponent implements OnInit {
     
     this.postulantes = postulantesFiltrados;
     
-    // Filtrar plazas
+    // Filtrar plazas (solo subunidades)
     let plazasFiltradas = [...this.plazasSinFiltrar];
     
-    if (this.filtroGlobal.grupoOcupacionalId) {
-      plazasFiltradas = plazasFiltradas.filter(p => 
-        p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId
-      );
+    if (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0) {
+      // Filtrar si subunidades no incluye undefined (que representa "Todas")
+      const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
+      if (subunidadesValidas.length > 0) {
+        plazasFiltradas = plazasFiltradas.filter(p => 
+          subunidadesValidas.includes(p.subunidad || '-')
+        );
+      }
     }
     
     this.plazas = plazasFiltradas;
@@ -1526,6 +1558,14 @@ export class AppComponent implements OnInit {
   }
 
   /**
+   * Limpiar filtro de subunidades
+   */
+  limpiarSubunidades() {
+    this.filtroGlobal.subunidades = [];
+    this.aplicarFiltrosGlobales();
+  }
+
+  /**
    * Adjudicar postulante - mostrar plazas disponibles para selección
    */
   adjudicar(postulante: PostulanteConEstado) {
@@ -1538,22 +1578,39 @@ export class AppComponent implements OnInit {
     // Guardar el postulante seleccionado
     this.postulanteSeleccionado = postulante;
     
-    // Buscar plazas disponibles solo del mismo grupo ocupacional del postulante
+    // Buscar plazas disponibles (sin filtrar por grupo ocupacional)
     const filtros: FiltroPlazas = { 
-      grupoOcupacionalId: postulante.grupo_ocupacional_id,
       soloDisponibles: true // Solo mostrar plazas con cupos libres
     };
     
     this.apiService.getPlazasConDisponibilidad(filtros).subscribe({
       next: (response) => {
         if (response.success && response.data && response.data.length > 0) {
-          this.plazasDisponibles = response.data;
-          this.plazasFiltradasModal = [...response.data]; // Copia inicial sin filtros
+          let plazasDisponibles = response.data;
+          
+          // Aplicar filtro de subunidades si está activo
+          if (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0) {
+            const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
+            if (subunidadesValidas.length > 0) {
+              plazasDisponibles = plazasDisponibles.filter((p: any) => 
+                subunidadesValidas.includes(p.subunidad || '-')
+              );
+            }
+          }
+          
+          // Verificar si hay plazas después del filtro
+          if (plazasDisponibles.length === 0) {
+            this.mostrarError(`No hay plazas disponibles que coincidan con los filtros de subunidad seleccionados`);
+            return;
+          }
+          
+          this.plazasDisponibles = plazasDisponibles;
+          this.plazasFiltradasModal = [...plazasDisponibles];
           this.plazaSeleccionada = null; // Resetear selección
           
           this.mostrarModalAdjudicacion = true; // Mostrar modal
         } else {
-          this.mostrarError(`No hay plazas disponibles para el grupo ocupacional "${postulante.grupo_ocupacional}"`);
+          this.mostrarError(`No hay plazas disponibles en este momento`);
         }
       },
       error: (error) => {
@@ -1759,6 +1816,9 @@ export class AppComponent implements OnInit {
         if (!hayFiltrosGlobales) {
           this.plazas = data;
         }
+        
+        // Extraer subunidades disponibles
+        this.extraerSubunidadesDisponibles();
         
         this.loadingPlazas = false;
         plazasLoaded = true;
@@ -2290,11 +2350,25 @@ export class AppComponent implements OnInit {
       doc.setFontSize(13);
       
       const cargo = postulante.grupo_ocupacional || 'CARGO NO ESPECIFICADO';
+      const especialidad = postulante.especialidad && postulante.especialidad.trim() !== '' ? postulante.especialidad : null;
       const red = postulante.red_adjudicada || 'RED NO ESPECIFICADA';
       const ipress = postulante.ipress_adjudicada || 'IPRESS NO ESPECIFICADA';
       const subunidad = postulante.subunidad_adjudicada || 'SUBUNIDAD NO ESPECIFICADA';
       
-      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${cargo.toUpperCase()} en la Red ${red.toUpperCase()} asignado(a) a ${ipress.toUpperCase()} y a la Subunidad ${subunidad.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
+      // Debug: Verificar datos del postulante
+      console.log('Postulante para PDF:', {
+        nombre: postulante.apellidos_nombres,
+        cargo: cargo,
+        especialidad: postulante.especialidad,
+        especialidadProcesada: especialidad
+      });
+      
+      // Construir texto del cargo con especialidad si existe
+      const textoCargo = especialidad 
+        ? `${cargo.toUpperCase()} en la especialidad de ${especialidad.toUpperCase()}`
+        : cargo.toUpperCase();
+      
+      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${textoCargo} en la Red ${red.toUpperCase()} asignado(a) a ${ipress.toUpperCase()} y a la Subunidad ${subunidad.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
       
       const lineasBeneficiario = doc.splitTextToSize(textoBeneficiario, maxWidth);
       doc.text(lineasBeneficiario, marginLeft, yPos, { align: 'justify', maxWidth: maxWidth });

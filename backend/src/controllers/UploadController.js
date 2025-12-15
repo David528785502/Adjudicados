@@ -68,20 +68,17 @@ class UploadController {
         });
       }
 
-      // Obtener el grupo ocupacional de los postulantes (todos deben ser del mismo)
-      const grupoOcupacional = postulantesData[0]['Grupo Ocupacional'].toUpperCase().trim();
-
       // Iniciar transacción
       await client.query('BEGIN');
 
-      // 1. Guardar o verificar grupo ocupacional
-      const grupoOcupacionalId = await guardarGrupoOcupacional(client, grupoOcupacional);
+      // 1. Guardar o verificar todos los grupos ocupacionales (de postulantes y plazas)
+      const gruposOcupacionalesMap = await guardarGruposOcupacionales(client, postulantesData, plazasData);
 
       // 2. Guardar postulantes
-      const postulanteIds = await guardarPostulantes(client, postulantesData, grupoOcupacionalId);
+      const postulanteIds = await guardarPostulantes(client, postulantesData, gruposOcupacionalesMap);
 
       // 3. Guardar plazas (incluyendo redes e IPRESS)
-      const plazaIds = await guardarPlazas(client, plazasData, grupoOcupacionalId);
+      const plazaIds = await guardarPlazas(client, plazasData, gruposOcupacionalesMap);
 
       // Commit de la transacción
       await client.query('COMMIT');
@@ -92,7 +89,7 @@ class UploadController {
         data: {
           postulantes: postulanteIds.length,
           plazas: plazaIds.length,
-          grupoOcupacional: grupoOcupacional
+          gruposOcupacionales: Object.keys(gruposOcupacionalesMap).length
         }
       });
 
@@ -116,7 +113,6 @@ class UploadController {
  */
 function validarPostulantes(postulantes) {
     const omsVistos = new Set();
-    const gruposOcupacionales = new Set();
 
     for (let i = 0; i < postulantes.length; i++) {
       const fila = i + 2; // +2 porque la fila 1 es encabezado y Excel empieza en 1
@@ -151,6 +147,8 @@ function validarPostulantes(postulantes) {
         };
       }
 
+      // Especialidad es opcional, no se valida
+
       // Validar que OM sea un número
       const om = Number(p['OM']);
       if (isNaN(om) || om <= 0) {
@@ -168,19 +166,10 @@ function validarPostulantes(postulantes) {
         };
       }
       omsVistos.add(om);
-
-      // Validar que todos tengan el mismo grupo ocupacional
-      const grupoOcupacional = p['Grupo Ocupacional'].toUpperCase().trim();
-      gruposOcupacionales.add(grupoOcupacional);
     }
 
-    // Validar que todos los postulantes sean del mismo grupo ocupacional
-    if (gruposOcupacionales.size > 1) {
-      return {
-        valido: false,
-        mensaje: `Todos los postulantes deben ser del mismo Grupo Ocupacional. Se encontraron: ${Array.from(gruposOcupacionales).join(', ')}`
-      };
-    }
+    // Ya no validamos que todos sean del mismo grupo ocupacional
+    // Ahora pueden tener diferentes grupos ocupacionales
 
     return { valido: true };
   }
@@ -259,25 +248,52 @@ async function guardarGrupoOcupacional(client, nombre) {
     return resultadoInsert.rows[0].id;
   }
 
+/**
+ * Guardar o verificar todos los grupos ocupacionales (solo de postulantes)
+ */
+async function guardarGruposOcupacionales(client, postulantesData, plazasData) {
+    const gruposMap = {};
+    const gruposUnicos = new Set();
+
+    // Extraer grupos ocupacionales SOLO de postulantes
+    postulantesData.forEach(p => {
+      const grupo = p['Grupo Ocupacional'].toUpperCase().trim();
+      gruposUnicos.add(grupo);
+    });
+
+    // Guardar o verificar cada grupo ocupacional
+    for (const grupo of gruposUnicos) {
+      const grupoId = await guardarGrupoOcupacional(client, grupo);
+      gruposMap[grupo] = grupoId;
+    }
+
+    return gruposMap;
+  }
+
 
 
 /**
  * Guardar postulantes
  */
-async function guardarPostulantes(client, postulantes, grupoOcupacionalId) {
+async function guardarPostulantes(client, postulantes, gruposOcupacionalesMap) {
     const ids = [];
 
     for (const p of postulantes) {
       const om = Number(p['OM']);
       const apellidos = p['Apellidos'].toString().toUpperCase().trim();
       const nombres = p['Nombres'].toString().toUpperCase().trim();
+      const grupoOcupacional = p['Grupo Ocupacional'].toUpperCase().trim();
+      const especialidad = p['ESPECIALIDAD'] ? p['ESPECIALIDAD'].toString().toUpperCase().trim() : null;
 
-      // Insertar postulante
+      // Obtener ID del grupo ocupacional
+      const grupoOcupacionalId = gruposOcupacionalesMap[grupoOcupacional];
+
+      // Insertar postulante (con especialidad si existe)
       const resultado = await client.query(
-        `INSERT INTO postulantes (orden_merito, apellidos, nombres, grupo_ocupacional_id)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO postulantes (orden_merito, apellidos, nombres, grupo_ocupacional_id, especialidad)
+         VALUES ($1, $2, $3, $4, $5)
          RETURNING id`,
-        [om, apellidos, nombres, grupoOcupacionalId]
+        [om, apellidos, nombres, grupoOcupacionalId, especialidad || null]
       );
 
       const postulanteId = resultado.rows[0].id;
@@ -349,12 +365,16 @@ async function guardarIpress(client, nombre, redId) {
 /**
  * Guardar plazas
  */
-async function guardarPlazas(client, plazas, grupoOcupacionalId) {
+async function guardarPlazas(client, plazas, gruposOcupacionalesMap) {
     const ids = [];
+    
+    // Usar el primer grupo ocupacional del mapa (de los postulantes)
+    const grupoOcupacionalId = Object.values(gruposOcupacionalesMap)[0] || null;
 
     for (const p of plazas) {
       const redNombre = p['red'].toString().trim();
       const ipressNombre = p['ipress'].toString().trim();
+      // La columna 'sub unidad' es simplemente texto de subunidad
       const subunidad = p['sub unidad'] ? p['sub unidad'].toString().toUpperCase().trim() : '-';
       const cantidad = Number(p['cant. Plazas']);
 

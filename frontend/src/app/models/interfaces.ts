@@ -83,6 +83,7 @@ export interface PostulanteConEstado {
   nombres: string;
   grupo_ocupacional_id: number;
   grupo_ocupacional: string;
+  especialidad?: string; // Especialidad del postulante
   fecha_registro: string;
   estado: EstadoAdjudicacion;
   red_adjudicada?: string;
