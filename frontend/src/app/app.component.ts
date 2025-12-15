@@ -1783,7 +1783,8 @@ export class AppComponent implements OnInit {
     const hayFiltrosGlobales = 
       this.filtroGlobal.grupoOcupacionalId || 
       this.filtroGlobal.estado || 
-      this.filtroGlobal.fechaRegistro;
+      this.filtroGlobal.fechaRegistro ||
+      (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0);
     
     // Recargar datos desde el backend
     this.loadingPostulantes = true;
