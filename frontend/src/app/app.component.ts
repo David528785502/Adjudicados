@@ -1062,6 +1062,7 @@ import jsPDF from 'jspdf';
 
     .calendario-footer {
       margin-top: 8px;
+      margin-bottom: 8px;
       padding-top: 8px;
       border-top: 1px solid #e0e0e0;
       display: flex;
