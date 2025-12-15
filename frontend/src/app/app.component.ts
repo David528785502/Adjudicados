@@ -207,8 +207,14 @@ import jsPDF from 'jspdf';
               <!-- Columna Grupo Ocupacional -->
               <ng-container matColumnDef="grupo_ocupacional">
                 <th mat-header-cell *matHeaderCellDef>Grupo Ocupacional</th>
-                <td mat-cell *matCellDef="let postulante">
-                  {{postulante.especialidad || '-'}}
+                <td mat-cell *matCellDef="let postulante" class="grupo-ocupacional-cell">
+                  <div class="grupo-ocupacional-content">
+                    <div class="grupo-nombre">{{postulante.grupo_ocupacional || '-'}}</div>
+                    <ng-container *ngIf="postulante.especialidad && postulante.especialidad.trim() !== ''">
+                      <div class="grupo-separador">-</div>
+                      <div class="grupo-especialidad">{{postulante.especialidad}}</div>
+                    </ng-container>
+                  </div>
                 </td>
               </ng-container>
 
@@ -1040,6 +1046,38 @@ import jsPDF from 'jspdf';
       padding-bottom: 0;
       margin-top: 0;
       margin-bottom: 0;
+    }
+
+    /* Columna Grupo Ocupacional con Especialidad */
+    .grupo-ocupacional-cell {
+      text-align: center;
+    }
+
+    .grupo-ocupacional-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .grupo-nombre {
+      font-weight: 500;
+      color: #212121;
+      font-size: 13px;
+      line-height: 1.3;
+    }
+
+    .grupo-separador {
+      color: #9e9e9e;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .grupo-especialidad {
+      color: #1976d2;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
     }
   `]
 })

@@ -349,44 +349,44 @@ INSERT INTO plazas (ipress_id, grupo_ocupacional_id, subunidad, especialidad, to
 
 -- ============================================================================
 -- DATOS DE PRUEBA: Postulantes
--- Formato de carga: OM | Apellidos | Nombres | Grupo Ocupacional
+-- Formato de carga: OM | Apellidos | Nombres | Grupo Ocupacional | Especialidad
 -- ============================================================================
-INSERT INTO postulantes (orden_merito, apellidos, nombres, grupo_ocupacional_id) VALUES
-    -- ENFERMERA
-    (1, 'SILVA LOPEZ', 'MARIA DEFILIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (2, 'ANCHELIA OSCATE', 'NILDA GUIULIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (3, 'MOLERO ESCOBAR', 'FATIMA VIVIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (4, 'FLORES PONCE', 'CLAUDIA GABRIELA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (5, 'QUESQUEN MILLONES', 'KARLA GUILIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (6, 'GONZALES GOMEZ', 'LILIANA MILAGROS', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (7, 'COLQUEHUANCA USEDO', 'YENIFER', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (8, 'CASTILLO PEREDA', 'LUZ VIRGINIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (9, 'AREVALO LOPEZ', 'KELLY GISELL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
-    (10, 'BLANCO JULIAN', 'CANDY VALERIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA')),
+INSERT INTO postulantes (orden_merito, apellidos, nombres, grupo_ocupacional_id, especialidad) VALUES
+    -- ENFERMERA (algunas con especialidad)
+    (1, 'SILVA LOPEZ', 'MARIA DEFILIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), 'EMERGENCIA'),
+    (2, 'ANCHELIA OSCATE', 'NILDA GUIULIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), 'UCI'),
+    (3, 'MOLERO ESCOBAR', 'FATIMA VIVIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), 'PEDIATRIA'),
+    (4, 'FLORES PONCE', 'CLAUDIA GABRIELA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
+    (5, 'QUESQUEN MILLONES', 'KARLA GUILIANA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
+    (6, 'GONZALES GOMEZ', 'LILIANA MILAGROS', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), 'NEONATOLOGIA'),
+    (7, 'COLQUEHUANCA USEDO', 'YENIFER', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
+    (8, 'CASTILLO PEREDA', 'LUZ VIRGINIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
+    (9, 'AREVALO LOPEZ', 'KELLY GISELL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
+    (10, 'BLANCO JULIAN', 'CANDY VALERIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'ENFERMERA'), NULL),
     
-    -- MEDICOS
-    (11, 'AREVALO ROMERO', 'ZURISADAISI', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (12, 'HOYOS PASTOR', 'RAQUEL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (13, 'CABREJOS ARELLANO', 'LUZ KATHERINE', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (14, 'VELAZCO ZUTA', 'RENAN RICARDO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (15, 'ALEGRIA CACERES', 'CYNTHIA FRANCESCA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (16, 'PEREZ MENDOZA', 'VIRGINIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (17, 'ROMAN SANTILLAN', 'GIANMARCO MANUEL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
-    (18, 'ALATRISTA VALDEZ', 'FLAVIA ANDREA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS')),
+    -- MEDICOS (algunos con especialidad)
+    (11, 'AREVALO ROMERO', 'ZURISADAISI', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), 'MEDICINA GENERAL'),
+    (12, 'HOYOS PASTOR', 'RAQUEL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
+    (13, 'CABREJOS ARELLANO', 'LUZ KATHERINE', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), 'MEDICINA FAMILIAR'),
+    (14, 'VELAZCO ZUTA', 'RENAN RICARDO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
+    (15, 'ALEGRIA CACERES', 'CYNTHIA FRANCESCA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
+    (16, 'PEREZ MENDOZA', 'VIRGINIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
+    (17, 'ROMAN SANTILLAN', 'GIANMARCO MANUEL', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
+    (18, 'ALATRISTA VALDEZ', 'FLAVIA ANDREA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'MEDICOS'), NULL),
     
-    -- CONDUCTOR DE AMBULANCIA
-    (19, 'ARCE CHIHUAN', 'HUMBERTO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA')),
-    (20, 'VICHARRA GRANADOS', 'JAVIER MARTIN', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA')),
-    (21, 'DE LA CRUZ AVENDAÑO', 'JEAN KEVIN', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA')),
+    -- CONDUCTOR DE AMBULANCIA (sin especialidad)
+    (19, 'ARCE CHIHUAN', 'HUMBERTO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA'), NULL),
+    (20, 'VICHARRA GRANADOS', 'JAVIER MARTIN', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA'), NULL),
+    (21, 'DE LA CRUZ AVENDAÑO', 'JEAN KEVIN', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'CONDUCTOR DE AMBULANCIA'), NULL),
     
-    -- TECNICO DE ENFERMERIA
-    (22, 'MUÑOZ GARCIA', 'MARLENY YESENIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA')),
-    (23, 'LUNA HUAMAN', 'TIFFANY MARLA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA')),
-    (24, 'ALARCON YUCRA', 'GOMER CHARO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA')),
+    -- TECNICO DE ENFERMERIA (sin especialidad)
+    (22, 'MUÑOZ GARCIA', 'MARLENY YESENIA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA'), NULL),
+    (23, 'LUNA HUAMAN', 'TIFFANY MARLA', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA'), NULL),
+    (24, 'ALARCON YUCRA', 'GOMER CHARO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'TECNICO DE ENFERMERIA'), NULL),
     
-    -- DIGITADOR ASISTENCIAL
-    (25, 'BLAS JARA', 'RICARDO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'DIGITADOR ASISTENCIAL')),
-    (26, 'PANIORA RIVERA', 'DIMELSSA ELIZABETH', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'DIGITADOR ASISTENCIAL'));
+    -- DIGITADOR ASISTENCIAL (sin especialidad)
+    (25, 'BLAS JARA', 'RICARDO', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'DIGITADOR ASISTENCIAL'), NULL),
+    (26, 'PANIORA RIVERA', 'DIMELSSA ELIZABETH', (SELECT id FROM grupos_ocupacionales WHERE nombre = 'DIGITADOR ASISTENCIAL'), NULL);
 
 -- ============================================================================
 -- DATOS DE PRUEBA: Adjudicaciones (todos pendientes inicialmente)
@@ -456,3 +456,36 @@ ORDER BY estado;
 -- ============================================================================
 -- FIN DEL SCRIPT
 -- ============================================================================
+
+
+-- ELIMINAR la vista existente
+DROP VIEW IF EXISTS postulantes_con_estado CASCADE;
+
+-- CREAR la vista con especialidad
+CREATE VIEW postulantes_con_estado AS
+SELECT 
+    p.id,
+    p.orden_merito,
+    CONCAT(p.apellidos, ' ', p.nombres) AS apellidos_nombres,
+    p.apellidos,
+    p.nombres,
+    p.grupo_ocupacional_id,
+    go.nombre AS grupo_ocupacional,
+    p.especialidad,
+    p.fecha_registro,
+    COALESCE(adj.estado, 'pendiente') AS estado,
+    r.nombre AS red_adjudicada,
+    i.nombre AS ipress_adjudicada,
+    pl.subunidad AS subunidad_adjudicada,
+    go_adj.nombre AS grupo_ocupacional_adjudicado,
+    pl.especialidad AS especialidad_adjudicada,
+    adj.fecha_adjudicacion,
+    adj.fecha_desistimiento,
+    adj.observaciones
+FROM postulantes p
+INNER JOIN grupos_ocupacionales go ON p.grupo_ocupacional_id = go.id
+LEFT JOIN adjudicaciones adj ON p.id = adj.postulante_id
+LEFT JOIN plazas pl ON adj.plaza_id = pl.id
+LEFT JOIN ipress i ON pl.ipress_id = i.id
+LEFT JOIN redes r ON i.red_id = r.id
+LEFT JOIN grupos_ocupacionales go_adj ON pl.grupo_ocupacional_id = go_adj.id;
