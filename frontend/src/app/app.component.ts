@@ -1109,6 +1109,12 @@ import jsPDF from 'jspdf';
     }
 
     /* Input de búsqueda en filtros */
+    ::ng-deep .mat-mdc-select-panel.filtro-con-busqueda {
+      min-width: 400px !important;
+      max-width: 500px !important;
+      overflow-x: hidden !important;
+    }
+
     ::ng-deep .filtro-con-busqueda .search-box {
       position: sticky;
       top: -8px;
@@ -1141,6 +1147,20 @@ import jsPDF from 'jspdf';
 
     ::ng-deep .filtro-con-busqueda .search-input::placeholder {
       color: #9e9e9e;
+    }
+
+    ::ng-deep .filtro-con-busqueda .mat-mdc-option {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 16px;
+      min-height: 48px;
+    }
+
+    ::ng-deep .filtro-con-busqueda .mat-mdc-option:last-child {
+      border-bottom: none;
+    }
+
+    ::ng-deep .filtro-con-busqueda .mat-mdc-option:hover {
+      background-color: #f5f5f5;
     }
   `]
 })
