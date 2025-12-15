@@ -61,9 +61,23 @@ import jsPDF from 'jspdf';
           <mat-form-field appearance="outline">
             <mat-label>Grupo Ocupacional</mat-label>
             <mat-select [(value)]="filtroGlobal.grupoOcupacionalId" 
-                       (selectionChange)="aplicarFiltrosGlobales()">
+                       (selectionChange)="aplicarFiltrosGlobales()"
+                       panelClass="filtro-con-busqueda">
+              <mat-select-trigger>
+                {{obtenerNombreGrupoSeleccionado() || 'Todos'}}
+              </mat-select-trigger>
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input 
+                       placeholder="Buscar grupo ocupacional..."
+                       [(ngModel)]="busquedaGrupoOcupacional"
+                       (input)="filtrarGruposOcupacionales()"
+                       (click)="$event.stopPropagation()"
+                       (keydown)="$event.stopPropagation()"
+                       class="search-input">
+              </div>
               <mat-option [value]="undefined">Todos</mat-option>
-              <mat-option *ngFor="let grupo of gruposOcupacionales" [value]="grupo.id">
+              <mat-option *ngFor="let grupo of gruposOcupacionalesFiltrados" [value]="grupo.id">
                 {{grupo.nombre}}
               </mat-option>
             </mat-select>
@@ -73,9 +87,23 @@ import jsPDF from 'jspdf';
             <mat-label>Subunidad</mat-label>
             <mat-select [(value)]="filtroGlobal.subunidades" 
                        (selectionChange)="aplicarFiltrosGlobales()"
-                       multiple>
+                       multiple
+                       panelClass="filtro-con-busqueda">
+              <mat-select-trigger>
+                {{obtenerTextoSubunidadesSeleccionadas()}}
+              </mat-select-trigger>
+              <div class="search-box">
+                <mat-icon class="search-icon">search</mat-icon>
+                <input 
+                       placeholder="Buscar subunidad..."
+                       [(ngModel)]="busquedaSubunidad"
+                       (input)="filtrarSubunidades()"
+                       (click)="$event.stopPropagation()"
+                       (keydown)="$event.stopPropagation()"
+                       class="search-input">
+              </div>
               <mat-option [value]="undefined" (click)="limpiarSubunidades()">Todas</mat-option>
-              <mat-option *ngFor="let subunidad of subunidadesDisponibles" [value]="subunidad">
+              <mat-option *ngFor="let subunidad of subunidadesFiltradas" [value]="subunidad">
                 {{subunidad}}
               </mat-option>
             </mat-select>
@@ -1079,6 +1107,41 @@ import jsPDF from 'jspdf';
       font-weight: 600;
       text-transform: uppercase;
     }
+
+    /* Input de búsqueda en filtros */
+    ::ng-deep .filtro-con-busqueda .search-box {
+      position: sticky;
+      top: -8px;
+      z-index: 1001;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      margin: -8px -8px 0 -8px;
+    }
+
+    ::ng-deep .filtro-con-busqueda .search-icon {
+      color: #757575;
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    ::ng-deep .filtro-con-busqueda .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      padding: 4px;
+      background: transparent;
+    }
+
+    ::ng-deep .filtro-con-busqueda .search-input::placeholder {
+      color: #9e9e9e;
+    }
   `]
 })
 export class AppComponent implements OnInit {
@@ -1114,6 +1177,12 @@ export class AppComponent implements OnInit {
   subunidadesDisponibles: string[] = [];
   postulantesSinFiltrar: PostulanteConEstado[] = [];
   plazasSinFiltrar: PlazaConDisponibilidad[] = [];
+
+  // Variables para búsqueda en filtros
+  busquedaGrupoOcupacional = '';
+  busquedaSubunidad = '';
+  gruposOcupacionalesFiltrados: GrupoOcupacional[] = [];
+  subunidadesFiltradas: string[] = [];
 
   // Calendario personalizado
   mostrarCalendario = false;
@@ -1191,6 +1260,7 @@ export class AppComponent implements OnInit {
       this.apiService.getGruposOcupacionales().subscribe({
         next: (response) => {
           this.gruposOcupacionales = response.data;
+          this.gruposOcupacionalesFiltrados = [...this.gruposOcupacionales];
           resolve();
         },
         error: (error) => {
@@ -1199,6 +1269,60 @@ export class AppComponent implements OnInit {
         }
       });
     });
+  }
+
+  /**
+   * Filtrar grupos ocupacionales según búsqueda
+   */
+  filtrarGruposOcupacionales() {
+    const busqueda = this.busquedaGrupoOcupacional.toLowerCase().trim();
+    if (!busqueda) {
+      this.gruposOcupacionalesFiltrados = [...this.gruposOcupacionales];
+    } else {
+      this.gruposOcupacionalesFiltrados = this.gruposOcupacionales.filter(grupo =>
+        grupo.nombre.toLowerCase().includes(busqueda)
+      );
+    }
+  }
+
+  /**
+   * Filtrar subunidades según búsqueda
+   */
+  filtrarSubunidades() {
+    const busqueda = this.busquedaSubunidad.toLowerCase().trim();
+    if (!busqueda) {
+      this.subunidadesFiltradas = [...this.subunidadesDisponibles];
+    } else {
+      this.subunidadesFiltradas = this.subunidadesDisponibles.filter(subunidad =>
+        subunidad.toLowerCase().includes(busqueda)
+      );
+    }
+  }
+
+  /**
+   * Obtener nombre del grupo ocupacional seleccionado
+   */
+  obtenerNombreGrupoSeleccionado(): string {
+    if (!this.filtroGlobal.grupoOcupacionalId) return '';
+    const grupo = this.gruposOcupacionales.find(g => g.id === this.filtroGlobal.grupoOcupacionalId);
+    return grupo ? grupo.nombre : '';
+  }
+
+  /**
+   * Obtener texto de subunidades seleccionadas
+   */
+  obtenerTextoSubunidadesSeleccionadas(): string {
+    if (!this.filtroGlobal.subunidades || this.filtroGlobal.subunidades.length === 0) {
+      return 'Todas';
+    }
+    const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
+    if (subunidadesValidas.length === 0) {
+      return 'Todas';
+    }
+    if (subunidadesValidas.length === 1) {
+      return subunidadesValidas[0];
+    }
+    return `${subunidadesValidas.length} seleccionadas`;
   }
 
   /**
@@ -1420,6 +1544,7 @@ export class AppComponent implements OnInit {
       subunidadesSet.add(subunidad);
     });
     this.subunidadesDisponibles = Array.from(subunidadesSet).sort();
+    this.subunidadesFiltradas = [...this.subunidadesDisponibles];
   }
 
   /**
