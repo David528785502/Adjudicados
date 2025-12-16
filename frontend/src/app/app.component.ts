@@ -161,7 +161,8 @@ import jsPDF from 'jspdf';
           <mat-form-field appearance="outline">
             <mat-label>Estado</mat-label>
             <mat-select [(value)]="filtroGlobal.estado" 
-                       (selectionChange)="aplicarFiltrosGlobales()">
+                       (selectionChange)="aplicarFiltrosGlobales()"
+                       panelClass="estado-dropdown">
               <mat-option [value]="undefined">Todos</mat-option>
               <mat-option value="pendiente">Pendiente</mat-option>
               <mat-option value="adjudicado">Adjudicado</mat-option>
@@ -1161,6 +1162,11 @@ import jsPDF from 'jspdf';
 
     ::ng-deep .filtro-con-busqueda .mat-mdc-option:hover {
       background-color: #f5f5f5;
+    }
+
+    /* Dropdown de Estado - altura aumentada */
+    ::ng-deep .mat-mdc-select-panel.estado-dropdown {
+      max-height: 400px !important;
     }
   `]
 })
