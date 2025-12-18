@@ -489,7 +489,6 @@ import jsPDF from 'jspdf';
                   <div class="plaza-secondary">
                     <div class="ipress-name">{{plaza.ipress}}</div>
                     <div class="plaza-meta">
-                      <span *ngIf="plaza.subunidad" class="meta-item">{{plaza.subunidad}}</span>
                       <span *ngIf="plaza.especialidad" class="meta-item">{{plaza.especialidad}}</span>
                     </div>
                   </div>
@@ -1277,7 +1276,7 @@ import jsPDF from 'jspdf';
     /* Botón de alternar vista */
     .btn-toggle-view {
       font-weight: 500 !important;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;  
     }
 
     .btn-toggle-view mat-icon {
@@ -2012,7 +2011,6 @@ export class AppComponent implements OnInit {
       `PLAZA ASIGNADA\n` +
       `Red: ${this.plazaSeleccionada.red}\n` +
       `IPRESS: ${this.plazaSeleccionada.ipress}\n` +
-      `Subunidad: ${this.plazaSeleccionada.subunidad || 'No especificada'}\n` +
       `Especialidad: ${this.plazaSeleccionada.especialidad || 'No especificada'}`;
     
     this.iconoConfirmacion = 'assignment_turned_in';
@@ -2064,7 +2062,6 @@ export class AppComponent implements OnInit {
               `La plaza ha sido completamente ocupada:\n\n` +
               `Red: ${plazaAdjudicada.red}\n` +
               `IPRESS: ${plazaAdjudicada.ipress}\n` +
-              `Subunidad: ${plazaAdjudicada.subunidad || 'No especificada'}\n\n` +
               `Ya no quedan cupos disponibles en esta plaza.`;
             this.iconoConfirmacion = 'warning';
             this.accionConfirmacion = () => {
