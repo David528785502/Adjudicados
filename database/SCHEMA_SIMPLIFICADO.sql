@@ -149,6 +149,7 @@ SELECT
     i.id AS ipress_id,
     i.nombre AS ipress,
     go.id AS grupo_ocupacional_id,
+    go.nombre AS grupo_ocupacional,
     p.subunidad,
     p.especialidad,
     p.total,
@@ -159,7 +160,7 @@ INNER JOIN ipress i ON p.ipress_id = i.id
 INNER JOIN redes r ON i.red_id = r.id
 INNER JOIN grupos_ocupacionales go ON p.grupo_ocupacional_id = go.id
 LEFT JOIN adjudicaciones adj ON p.id = adj.plaza_id
-GROUP BY p.id, r.id, r.nombre, i.id, i.nombre, go.id, p.subunidad, p.especialidad, p.total;
+GROUP BY p.id, r.id, r.nombre, i.id, i.nombre, go.id, go.nombre, p.subunidad, p.especialidad, p.total;
 
 -- ============================================================================
 -- FUNCIÓN: validar_adjudicacion

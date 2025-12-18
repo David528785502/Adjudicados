@@ -60,7 +60,7 @@ import jsPDF from 'jspdf';
           <mat-form-field appearance="outline">
             <mat-label>Grupo Ocupacional</mat-label>
             <mat-select [(value)]="filtroGlobal.grupoOcupacionalId" 
-                       (selectionChange)="aplicarFiltrosGlobales()"
+                       (selectionChange)="onGrupoOcupacionalChange()"
                        panelClass="filtro-con-busqueda">
               <mat-select-trigger>
                 {{obtenerNombreGrupoSeleccionado() || 'Todos'}}
@@ -83,27 +83,28 @@ import jsPDF from 'jspdf';
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Subunidad</mat-label>
-            <mat-select [(value)]="filtroGlobal.subunidades" 
+            <mat-label>Especialidad</mat-label>
+            <mat-select [(value)]="filtroGlobal.especialidades" 
                        (selectionChange)="aplicarFiltrosGlobales()"
+                       [disabled]="!filtroGlobal.grupoOcupacionalId"
                        multiple
                        panelClass="filtro-con-busqueda">
               <mat-select-trigger>
-                {{obtenerTextoSubunidadesSeleccionadas()}}
+                {{obtenerTextoEspecialidadesSeleccionadas()}}
               </mat-select-trigger>
               <div class="search-box">
                 <mat-icon class="search-icon">search</mat-icon>
                 <input 
-                       placeholder="Buscar subunidad..."
-                       [(ngModel)]="busquedaSubunidad"
-                       (input)="filtrarSubunidades()"
+                       placeholder="Buscar especialidad..."
+                       [(ngModel)]="busquedaEspecialidad"
+                       (input)="filtrarEspecialidades()"
                        (click)="$event.stopPropagation()"
                        (keydown)="$event.stopPropagation()"
                        class="search-input">
               </div>
-              <mat-option [value]="undefined" (click)="limpiarSubunidades()">Todas</mat-option>
-              <mat-option *ngFor="let subunidad of subunidadesFiltradas" [value]="subunidad">
-                {{subunidad}}
+              <mat-option [value]="undefined" (click)="limpiarEspecialidades()">Todas</mat-option>
+              <mat-option *ngFor="let especialidad of especialidadesFiltradas" [value]="especialidad">
+                {{especialidad}}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -323,7 +324,7 @@ import jsPDF from 'jspdf';
         <div class="table-section">
           <h2 class="section-title">
             <mat-icon>business</mat-icon>
-            IPRESS - Plazas Disponibles ({{plazas.length}})
+            IPRESS - Posiciones Disponibles ({{plazas.length}})
           </h2>
 
           <!-- Tabla de plazas -->
@@ -332,38 +333,46 @@ import jsPDF from 'jspdf';
               
               <!-- Columna Red -->
               <ng-container matColumnDef="red">
-                <th mat-header-cell *matHeaderCellDef>Red</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.red}}</td>
+                <th mat-header-cell *matHeaderCellDef class="col-red">Red</th>
+                <td mat-cell *matCellDef="let plaza" class="col-red">{{plaza.red}}</td>
               </ng-container>
 
               <!-- Columna IPRESS -->
               <ng-container matColumnDef="ipress">
-                <th mat-header-cell *matHeaderCellDef>IPRESS</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.ipress}}</td>
+                <th mat-header-cell *matHeaderCellDef class="col-ipress">IPRESS</th>
+                <td mat-cell *matCellDef="let plaza" class="col-ipress">{{plaza.ipress}}</td>
               </ng-container>
 
-              <!-- Columna Subunidad -->
-              <ng-container matColumnDef="subunidad">
-                <th mat-header-cell *matHeaderCellDef>Subunidad</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.subunidad || '-'}}</td>
+              <!-- Columna Grupo Ocupacional -->
+              <ng-container matColumnDef="grupo_ocupacional">
+                <th mat-header-cell *matHeaderCellDef class="col-grupo">Grupo Ocupacional</th>
+                <td mat-cell *matCellDef="let plaza" class="grupo-ocupacional-cell col-grupo">
+                  <div class="grupo-ocupacional-content">
+                    <div class="grupo-nombre">{{plaza.grupo_ocupacional || '-'}}</div>
+                    <ng-container *ngIf="plaza.especialidad && plaza.especialidad.trim() !== ''">
+                      <div class="grupo-separador">-</div>
+                      <div class="grupo-especialidad">{{plaza.especialidad}}</div>
+                    </ng-container>
+                  </div>
+                </td>
               </ng-container>
 
               <!-- Columna Total -->
               <ng-container matColumnDef="total">
-                <th mat-header-cell *matHeaderCellDef>Total</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.total}}</td>
+                <th mat-header-cell *matHeaderCellDef class="col-num">Total</th>
+                <td mat-cell *matCellDef="let plaza" class="col-num">{{plaza.total}}</td>
               </ng-container>
 
               <!-- Columna Asignados -->
               <ng-container matColumnDef="asignados">
-                <th mat-header-cell *matHeaderCellDef>Asignados</th>
-                <td mat-cell *matCellDef="let plaza">{{plaza.asignados}}</td>
+                <th mat-header-cell *matHeaderCellDef class="col-num">Asignados</th>
+                <td mat-cell *matCellDef="let plaza" class="col-num">{{plaza.asignados}}</td>
               </ng-container>
 
               <!-- Columna Libres -->
               <ng-container matColumnDef="libres">
-                <th mat-header-cell *matHeaderCellDef>Libres</th>
-                <td mat-cell *matCellDef="let plaza">
+                <th mat-header-cell *matHeaderCellDef class="col-num">Libres</th>
+                <td mat-cell *matCellDef="let plaza" class="col-num">
                   <span [class]="plaza.libres > 0 ? 'disponible' : 'no-disponible'">
                     {{plaza.libres}}
                   </span>
@@ -420,6 +429,24 @@ import jsPDF from 'jspdf';
               <div class="header-content">
                 <h3>Plazas Disponibles</h3>
                 <span class="plazas-count">{{plazasFiltradasModal.length}} de {{plazasDisponibles.length}} {{plazasFiltradasModal.length === 1 ? 'plaza' : 'plazas'}}</span>
+              </div>
+              <div class="filtros-modal">
+                <mat-form-field appearance="outline" class="filtro-modal-field">
+                  <mat-label>Buscar Red</mat-label>
+                  <input matInput 
+                         [(ngModel)]="busquedaRedModal"
+                         (input)="filtrarPlazasModal()"
+                         placeholder="Escriba para buscar...">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="filtro-modal-field">
+                  <mat-label>Buscar IPRESS</mat-label>
+                  <input matInput 
+                         [(ngModel)]="busquedaIpressModal"
+                         (input)="filtrarPlazasModal()"
+                         placeholder="Escriba para buscar...">
+                  <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
               </div>
             </div>
             
@@ -626,7 +653,7 @@ import jsPDF from 'jspdf';
     }
 
     .plazas-header {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
       padding-bottom: 10px;
       border-bottom: 1px solid #e0e0e0;
     }
@@ -635,6 +662,7 @@ import jsPDF from 'jspdf';
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 12px;
     }
 
     .plazas-header h3 {
@@ -651,6 +679,29 @@ import jsPDF from 'jspdf';
       border-radius: 12px;
       font-size: 12px;
       font-weight: 600;
+    }
+
+    .filtros-modal {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .filtro-modal-field {
+      flex: 1;
+      font-size: 14px;
+    }
+
+    .filtro-modal-field ::ng-deep .mat-mdc-form-field-wrapper {
+      padding-bottom: 0 !important;
+    }
+
+    .filtro-modal-field ::ng-deep .mat-mdc-text-field-wrapper {
+      height: 48px;
+    }
+
+    .filtro-modal-field ::ng-deep input {
+      font-size: 13px;
     }
 
     .plazas-list {
@@ -1168,6 +1219,44 @@ import jsPDF from 'jspdf';
     ::ng-deep .mat-mdc-select-panel.estado-dropdown {
       max-height: 400px !important;
     }
+
+    /* Ancho de columnas de la tabla de plazas */
+    table {
+      width: 100% !important;
+    }
+
+    .col-red {
+      width: 13% !important;
+      max-width: 13% !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .col-ipress {
+      width: 25% !important;
+      max-width: 25% !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+
+    .col-grupo {
+      width: 32% !important;
+      max-width: 32% !important;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+
+    .col-num {
+      width: 10% !important;
+      max-width: 10% !important;
+      text-align: center !important;
+      padding-left: 4px !important;
+      padding-right: 4px !important;
+      white-space: nowrap !important;
+    }
   `]
 })
 export class AppComponent implements OnInit {
@@ -1186,7 +1275,7 @@ export class AppComponent implements OnInit {
 
   // Columnas de las tablas
   columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'ipress', 'acciones'];
-  columnasPlazas: string[] = ['red', 'ipress', 'subunidad', 'total', 'asignados', 'libres'];
+  columnasPlazas: string[] = ['red', 'ipress', 'grupo_ocupacional', 'total', 'asignados', 'libres'];
 
   // Filtros
   filtroPostulantes: FiltroPostulantes = {};
@@ -1197,18 +1286,18 @@ export class AppComponent implements OnInit {
     grupoOcupacionalId?: number;
     fechaRegistro?: string;
     estado?: EstadoAdjudicacion;
-    subunidades?: string[];
+    especialidades?: string[];
   } = {};
   fechasDisponibles: string[] = [];
-  subunidadesDisponibles: string[] = [];
+  especialidadesDisponibles: string[] = [];
   postulantesSinFiltrar: PostulanteConEstado[] = [];
   plazasSinFiltrar: PlazaConDisponibilidad[] = [];
 
   // Variables para búsqueda en filtros
   busquedaGrupoOcupacional = '';
-  busquedaSubunidad = '';
+  busquedaEspecialidad = '';
   gruposOcupacionalesFiltrados: GrupoOcupacional[] = [];
-  subunidadesFiltradas: string[] = [];
+  especialidadesFiltradas: string[] = [];
 
   // Calendario personalizado
   mostrarCalendario = false;
@@ -1222,6 +1311,8 @@ export class AppComponent implements OnInit {
   plazasDisponibles: PlazaConDisponibilidad[] = [];
   plazasFiltradasModal: PlazaConDisponibilidad[] = [];
   plazaSeleccionada: PlazaConDisponibilidad | null = null;
+  busquedaRedModal = '';
+  busquedaIpressModal = '';
 
   // Modal de confirmación
   mostrarModalConfirmacion = false;
@@ -1312,15 +1403,15 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Filtrar subunidades según búsqueda
+   * Filtrar especialidades según búsqueda
    */
-  filtrarSubunidades() {
-    const busqueda = this.busquedaSubunidad.toLowerCase().trim();
+  filtrarEspecialidades() {
+    const busqueda = this.busquedaEspecialidad.toLowerCase().trim();
     if (!busqueda) {
-      this.subunidadesFiltradas = [...this.subunidadesDisponibles];
+      this.especialidadesFiltradas = [...this.especialidadesDisponibles];
     } else {
-      this.subunidadesFiltradas = this.subunidadesDisponibles.filter(subunidad =>
-        subunidad.toLowerCase().includes(busqueda)
+      this.especialidadesFiltradas = this.especialidadesDisponibles.filter(especialidad =>
+        especialidad.toLowerCase().includes(busqueda)
       );
     }
   }
@@ -1335,20 +1426,23 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Obtener texto de subunidades seleccionadas
+   * Obtener texto de especialidades seleccionadas
    */
-  obtenerTextoSubunidadesSeleccionadas(): string {
-    if (!this.filtroGlobal.subunidades || this.filtroGlobal.subunidades.length === 0) {
+  obtenerTextoEspecialidadesSeleccionadas(): string {
+    if (!this.filtroGlobal.grupoOcupacionalId) {
+      return 'Seleccione grupo';
+    }
+    if (!this.filtroGlobal.especialidades || this.filtroGlobal.especialidades.length === 0) {
       return 'Todas';
     }
-    const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
-    if (subunidadesValidas.length === 0) {
+    const especialidadesValidas = this.filtroGlobal.especialidades.filter(e => e !== undefined);
+    if (especialidadesValidas.length === 0) {
       return 'Todas';
     }
-    if (subunidadesValidas.length === 1) {
-      return subunidadesValidas[0];
+    if (especialidadesValidas.length === 1) {
+      return especialidadesValidas[0];
     }
-    return `${subunidadesValidas.length} seleccionadas`;
+    return `${especialidadesValidas.length} seleccionadas`;
   }
 
   /**
@@ -1442,9 +1536,6 @@ export class AppComponent implements OnInit {
         // Guardar copia sin filtrar
         this.plazasSinFiltrar = [...data];
         this.plazas = data;
-        
-        // Extraer subunidades únicas disponibles
-        this.extraerSubunidadesDisponibles();
         
         this.loadingPlazas = false;
       },
@@ -1561,16 +1652,39 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Extraer subunidades únicas de plazas
+   * Extraer especialidades del grupo ocupacional seleccionado
    */
-  extraerSubunidadesDisponibles() {
-    const subunidadesSet = new Set<string>();
-    this.plazasSinFiltrar.forEach(p => {
-      const subunidad = p.subunidad || '-';
-      subunidadesSet.add(subunidad);
+  extraerEspecialidadesDisponibles() {
+    const especialidadesSet = new Set<string>();
+    
+    if (!this.filtroGlobal.grupoOcupacionalId) {
+      this.especialidadesDisponibles = [];
+      this.especialidadesFiltradas = [];
+      return;
+    }
+
+    // Extraer especialidades de postulantes del grupo seleccionado
+    this.postulantesSinFiltrar.forEach(p => {
+      if (p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId && p.especialidad) {
+        const esp = p.especialidad.trim();
+        if (esp !== '') {
+          especialidadesSet.add(esp);
+        }
+      }
     });
-    this.subunidadesDisponibles = Array.from(subunidadesSet).sort();
-    this.subunidadesFiltradas = [...this.subunidadesDisponibles];
+
+    // Extraer especialidades de plazas del grupo seleccionado
+    this.plazasSinFiltrar.forEach(p => {
+      if (p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId && p.especialidad) {
+        const esp = p.especialidad.trim();
+        if (esp !== '') {
+          especialidadesSet.add(esp);
+        }
+      }
+    });
+
+    this.especialidadesDisponibles = Array.from(especialidadesSet).sort();
+    this.especialidadesFiltradas = [...this.especialidadesDisponibles];
   }
 
   /**
@@ -1695,7 +1809,7 @@ export class AppComponent implements OnInit {
    * Aplicar filtros globales a ambas tablas
    */
   aplicarFiltrosGlobales() {
-    // Filtrar postulantes (solo grupo ocupacional, fecha y estado)
+    // Filtrar postulantes
     let postulantesFiltrados = [...this.postulantesSinFiltrar];
     
     if (this.filtroGlobal.grupoOcupacionalId) {
@@ -1718,18 +1832,35 @@ export class AppComponent implements OnInit {
         return fechaStr === this.filtroGlobal.fechaRegistro;
       });
     }
+
+    // Filtrar por especialidades (postulantes)
+    if (this.filtroGlobal.especialidades && this.filtroGlobal.especialidades.length > 0) {
+      const especialidadesValidas = this.filtroGlobal.especialidades.filter(e => e !== undefined);
+      if (especialidadesValidas.length > 0) {
+        postulantesFiltrados = postulantesFiltrados.filter(p => 
+          especialidadesValidas.includes(p.especialidad || '')
+        );
+      }
+    }
     
     this.postulantes = postulantesFiltrados;
     
-    // Filtrar plazas (solo subunidades)
+    // Filtrar plazas
     let plazasFiltradas = [...this.plazasSinFiltrar];
     
-    if (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0) {
-      // Filtrar si subunidades no incluye undefined (que representa "Todas")
-      const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
-      if (subunidadesValidas.length > 0) {
+    // Filtrar por grupo ocupacional (plazas)
+    if (this.filtroGlobal.grupoOcupacionalId) {
+      plazasFiltradas = plazasFiltradas.filter(p => 
+        p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId
+      );
+    }
+
+    // Filtrar por especialidades (plazas)
+    if (this.filtroGlobal.especialidades && this.filtroGlobal.especialidades.length > 0) {
+      const especialidadesValidas = this.filtroGlobal.especialidades.filter(e => e !== undefined);
+      if (especialidadesValidas.length > 0) {
         plazasFiltradas = plazasFiltradas.filter(p => 
-          subunidadesValidas.includes(p.subunidad || '-')
+          especialidadesValidas.includes(p.especialidad || '')
         );
       }
     }
@@ -1747,10 +1878,22 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * Limpiar filtro de subunidades
+   * Limpiar filtro de especialidades
    */
-  limpiarSubunidades() {
-    this.filtroGlobal.subunidades = [];
+  limpiarEspecialidades() {
+    this.filtroGlobal.especialidades = [];
+    this.aplicarFiltrosGlobales();
+  }
+
+  /**
+   * Cambio de grupo ocupacional - cargar especialidades
+   */
+  onGrupoOcupacionalChange() {
+    // Limpiar especialidades seleccionadas
+    this.filtroGlobal.especialidades = [];
+    // Cargar especialidades del grupo seleccionado
+    this.extraerEspecialidadesDisponibles();
+    // Aplicar filtros
     this.aplicarFiltrosGlobales();
   }
 
@@ -1777,19 +1920,19 @@ export class AppComponent implements OnInit {
         if (response.success && response.data && response.data.length > 0) {
           let plazasDisponibles = response.data;
           
-          // Aplicar filtro de subunidades si está activo
-          if (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0) {
-            const subunidadesValidas = this.filtroGlobal.subunidades.filter(s => s !== undefined);
-            if (subunidadesValidas.length > 0) {
+          // Aplicar filtro de especialidades si está activo
+          if (this.filtroGlobal.especialidades && this.filtroGlobal.especialidades.length > 0) {
+            const especialidadesValidas = this.filtroGlobal.especialidades.filter(e => e !== undefined);
+            if (especialidadesValidas.length > 0) {
               plazasDisponibles = plazasDisponibles.filter((p: any) => 
-                subunidadesValidas.includes(p.subunidad || '-')
+                especialidadesValidas.includes(p.especialidad || '')
               );
             }
           }
           
           // Verificar si hay plazas después del filtro
           if (plazasDisponibles.length === 0) {
-            this.mostrarError(`No hay plazas disponibles que coincidan con los filtros de subunidad seleccionados`);
+            this.mostrarError(`No hay plazas disponibles que coincidan con los filtros de especialidad seleccionados`);
             return;
           }
           
@@ -1915,6 +2058,33 @@ export class AppComponent implements OnInit {
     this.plazasDisponibles = [];
     this.plazasFiltradasModal = [];
     this.plazaSeleccionada = null;
+    this.busquedaRedModal = '';
+    this.busquedaIpressModal = '';
+  }
+
+  /**
+   * Filtrar plazas en el modal por Red e IPRESS
+   */
+  filtrarPlazasModal() {
+    let plazasFiltradas = [...this.plazasDisponibles];
+
+    // Filtrar por Red
+    if (this.busquedaRedModal.trim() !== '') {
+      const searchRed = this.busquedaRedModal.toLowerCase();
+      plazasFiltradas = plazasFiltradas.filter(plaza => 
+        plaza.red.toLowerCase().includes(searchRed)
+      );
+    }
+
+    // Filtrar por IPRESS
+    if (this.busquedaIpressModal.trim() !== '') {
+      const searchIpress = this.busquedaIpressModal.toLowerCase();
+      plazasFiltradas = plazasFiltradas.filter(plaza => 
+        plaza.ipress.toLowerCase().includes(searchIpress)
+      );
+    }
+
+    this.plazasFiltradasModal = plazasFiltradas;
   }
 
   /**
@@ -1935,7 +2105,7 @@ export class AppComponent implements OnInit {
       this.filtroGlobal.grupoOcupacionalId || 
       this.filtroGlobal.estado || 
       this.filtroGlobal.fechaRegistro ||
-      (this.filtroGlobal.subunidades && this.filtroGlobal.subunidades.length > 0);
+      (this.filtroGlobal.especialidades && this.filtroGlobal.especialidades.length > 0);
     
     // Recargar datos desde el backend
     this.loadingPostulantes = true;
@@ -2006,9 +2176,6 @@ export class AppComponent implements OnInit {
         if (!hayFiltrosGlobales) {
           this.plazas = data;
         }
-        
-        // Extraer subunidades disponibles
-        this.extraerSubunidadesDisponibles();
         
         this.loadingPlazas = false;
         plazasLoaded = true;
@@ -2306,11 +2473,14 @@ export class AppComponent implements OnInit {
             `Datos cargados exitosamente:\n` +
             `${response.data.postulantes} postulantes\n` +
             `${response.data.plazas} plazas\n` +
-            `Grupo: ${response.data.grupoOcupacional}`
+            `${response.data.gruposOcupacionales} grupos ocupacionales`
           );
           
-          // Recargar los datos
-          this.recargarDatos();
+          // Recargar grupos ocupacionales primero
+          this.cargarGruposOcupacionalesAsync().then(() => {
+            // Luego recargar los datos
+            this.recargarDatos();
+          });
         } else {
           this.mostrarError(response.message || 'Error al procesar el archivo');
         }
@@ -2558,7 +2728,7 @@ export class AppComponent implements OnInit {
         ? `${cargo.toUpperCase()} en la especialidad de ${especialidad.toUpperCase()}`
         : cargo.toUpperCase();
       
-      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${textoCargo} en la Red ${red.toUpperCase()} asignado(a) a ${ipress.toUpperCase()} y a la Subunidad ${subunidad.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-2025-GCGP-ESSALUD y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
+      const textoBeneficiario = `Es beneficiario(a) en condición de apto del cargo de ${textoCargo} en la Red ${red.toUpperCase()} asignado(a) a ${ipress.toUpperCase()}, según las disposiciones contenidas en la Resolución de Gerencia Central N° 1033-GCGP-ESSALUD-2025 y sus modificatorias de acuerdo, en concordancia a lo señalado en la Ley N° 31539, "Ley que autoriza, excepcionalmente y por única vez en el marco de la emergencia sanitaria, el cambio de contrato CAS - COVID a contrato CAS al personal asistencial en el sector salud".`;
       
       const lineasBeneficiario = doc.splitTextToSize(textoBeneficiario, maxWidth);
       doc.text(lineasBeneficiario, marginLeft, yPos, { align: 'justify', maxWidth: maxWidth });

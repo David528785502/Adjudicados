@@ -147,7 +147,7 @@ function validarPostulantes(postulantes) {
         };
       }
 
-      // Especialidad es opcional, no se valida
+      // Especialidad es opcional (puede estar vacía o no existir)
 
       // Validar que OM sea un número
       const om = Number(p['OM']);
@@ -180,40 +180,52 @@ function validarPostulantes(postulantes) {
  * Validar datos de plazas
  */
 function validarPlazas(plazas) {
+    // Debug: mostrar las columnas detectadas
+    if (plazas.length > 0) {
+      console.log('Columnas detectadas en Plazas:', Object.keys(plazas[0]));
+    }
+
     for (let i = 0; i < plazas.length; i++) {
       const fila = i + 2;
       const p = plazas[i];
 
       // Validar columnas requeridas
-      if (!p['red'] || p['red'].toString().trim() === '') {
+      if (!p['Red'] || p['Red'].toString().trim() === '') {
         return {
           valido: false,
           mensaje: `Fila ${fila} (Plazas): Falta Red`
         };
       }
 
-      if (!p['ipress'] || p['ipress'].toString().trim() === '') {
+      if (!p['Ipress'] || p['Ipress'].toString().trim() === '') {
         return {
           valido: false,
-          mensaje: `Fila ${fila} (Plazas): Falta IPRESS`
+          mensaje: `Fila ${fila} (Plazas): Falta Ipress`
         };
       }
 
-      // sub unidad puede estar vacía, se reemplazará por "-"
-
-      if (!p['cant. Plazas'] && p['cant. Plazas'] !== 0) {
+      if (!p['Grupo Ocupacional'] || p['Grupo Ocupacional'].toString().trim() === '') {
         return {
           valido: false,
-          mensaje: `Fila ${fila} (Plazas): Falta Cantidad de Plazas`
+          mensaje: `Fila ${fila} (Plazas): Falta Grupo Ocupacional`
         };
       }
 
-      // Validar que cant. Plazas sea un número entero positivo
-      const cantidad = Number(p['cant. Plazas']);
+      // Especialidad es opcional
+
+      if (!p['Cant. Plazas'] && p['Cant. Plazas'] !== 0) {
+        return {
+          valido: false,
+          mensaje: `Fila ${fila} (Plazas): Falta Cant. Plazas`
+        };
+      }
+
+      // Validar que Cant. Plazas sea un número entero positivo
+      const cantidad = Number(p['Cant. Plazas']);
       if (isNaN(cantidad) || cantidad <= 0 || !Number.isInteger(cantidad)) {
         return {
           valido: false,
-          mensaje: `Fila ${fila} (Plazas): La Cantidad de Plazas debe ser un número entero mayor a 0`
+          mensaje: `Fila ${fila} (Plazas): Cant. Plazas debe ser un número entero mayor a 0`
         };
       }
     }
@@ -249,16 +261,26 @@ async function guardarGrupoOcupacional(client, nombre) {
   }
 
 /**
- * Guardar o verificar todos los grupos ocupacionales (solo de postulantes)
+ * Guardar o verificar todos los grupos ocupacionales (de postulantes y plazas)
  */
 async function guardarGruposOcupacionales(client, postulantesData, plazasData) {
     const gruposMap = {};
     const gruposUnicos = new Set();
 
-    // Extraer grupos ocupacionales SOLO de postulantes
+    // Extraer grupos ocupacionales de postulantes
     postulantesData.forEach(p => {
-      const grupo = p['Grupo Ocupacional'].toUpperCase().trim();
-      gruposUnicos.add(grupo);
+      if (p['Grupo Ocupacional']) {
+        const grupo = p['Grupo Ocupacional'].toUpperCase().trim();
+        gruposUnicos.add(grupo);
+      }
+    });
+
+    // Extraer grupos ocupacionales de plazas
+    plazasData.forEach(p => {
+      if (p['Grupo Ocupacional']) {
+        const grupo = p['Grupo Ocupacional'].toUpperCase().trim();
+        gruposUnicos.add(grupo);
+      }
     });
 
     // Guardar o verificar cada grupo ocupacional
@@ -283,7 +305,7 @@ async function guardarPostulantes(client, postulantes, gruposOcupacionalesMap) {
       const apellidos = p['Apellidos'].toString().toUpperCase().trim();
       const nombres = p['Nombres'].toString().toUpperCase().trim();
       const grupoOcupacional = p['Grupo Ocupacional'].toUpperCase().trim();
-      const especialidad = p['ESPECIALIDAD'] ? p['ESPECIALIDAD'].toString().toUpperCase().trim() : null;
+      const especialidad = p['Especialidad'] ? p['Especialidad'].toString().toUpperCase().trim() : null;
 
       // Obtener ID del grupo ocupacional
       const grupoOcupacionalId = gruposOcupacionalesMap[grupoOcupacional];
@@ -367,16 +389,22 @@ async function guardarIpress(client, nombre, redId) {
  */
 async function guardarPlazas(client, plazas, gruposOcupacionalesMap) {
     const ids = [];
-    
-    // Usar el primer grupo ocupacional del mapa (de los postulantes)
-    const grupoOcupacionalId = Object.values(gruposOcupacionalesMap)[0] || null;
 
     for (const p of plazas) {
-      const redNombre = p['red'].toString().trim();
-      const ipressNombre = p['ipress'].toString().trim();
-      // La columna 'sub unidad' es simplemente texto de subunidad
-      const subunidad = p['sub unidad'] ? p['sub unidad'].toString().toUpperCase().trim() : '-';
-      const cantidad = Number(p['cant. Plazas']);
+      const redNombre = p['Red'].toString().trim();
+      const ipressNombre = p['Ipress'].toString().trim();
+      const grupoOcupacional = p['Grupo Ocupacional'].toUpperCase().trim();
+      const especialidad = p['Especialidad'] ? p['Especialidad'].toString().toUpperCase().trim() : null;
+      const cantidad = Number(p['Cant. Plazas']);
+
+      // Obtener ID del grupo ocupacional
+      let grupoOcupacionalId = gruposOcupacionalesMap[grupoOcupacional];
+      if (!grupoOcupacionalId) {
+        // Si el grupo no está en el mapa, crearlo dinámicamente
+        console.log(`Creando grupo ocupacional "${grupoOcupacional}" dinámicamente`);
+        grupoOcupacionalId = await guardarGrupoOcupacional(client, grupoOcupacional);
+        gruposOcupacionalesMap[grupoOcupacional] = grupoOcupacionalId;
+      }
 
       // Guardar o verificar red
       const redId = await guardarRed(client, redNombre);
@@ -384,15 +412,32 @@ async function guardarPlazas(client, plazas, gruposOcupacionalesMap) {
       // Guardar o verificar IPRESS
       const ipressId = await guardarIpress(client, ipressNombre, redId);
 
-      // Verificar si ya existe la plaza
-      const plazaExistente = await client.query(
-        `SELECT id FROM plazas 
-         WHERE ipress_id = $1 
-         AND grupo_ocupacional_id = $2 
-         AND subunidad = $3 
-         AND (especialidad IS NULL OR especialidad = '')`,
-        [ipressId, grupoOcupacionalId, subunidad]
-      );
+      // La subunidad se guarda como "-" por defecto (no viene en el Excel)
+      const subunidad = '-';
+
+      // Verificar si ya existe la plaza (considerando especialidad)
+      let plazaExistente;
+      if (especialidad === null) {
+        // Si no hay especialidad, buscar plazas sin especialidad
+        plazaExistente = await client.query(
+          `SELECT id FROM plazas 
+           WHERE ipress_id = $1 
+           AND grupo_ocupacional_id = $2 
+           AND subunidad = $3 
+           AND (especialidad IS NULL OR especialidad = '')`,
+          [ipressId, grupoOcupacionalId, subunidad]
+        );
+      } else {
+        // Si hay especialidad, buscar plazas con esa especialidad específica
+        plazaExistente = await client.query(
+          `SELECT id FROM plazas 
+           WHERE ipress_id = $1 
+           AND grupo_ocupacional_id = $2 
+           AND subunidad = $3 
+           AND especialidad = $4`,
+          [ipressId, grupoOcupacionalId, subunidad, especialidad]
+        );
+      }
 
       let plazaId;
       if (plazaExistente.rows.length > 0) {
@@ -402,9 +447,9 @@ async function guardarPlazas(client, plazas, gruposOcupacionalesMap) {
         // Si no existe, insertar nueva plaza
         const resultado = await client.query(
           `INSERT INTO plazas (ipress_id, grupo_ocupacional_id, subunidad, especialidad, total)
-           VALUES ($1, $2, $3, NULL, $4)
+           VALUES ($1, $2, $3, $4, $5)
            RETURNING id`,
-          [ipressId, grupoOcupacionalId, subunidad, cantidad]
+          [ipressId, grupoOcupacionalId, subunidad, especialidad, cantidad]
         );
         plazaId = resultado.rows[0].id;
       }
