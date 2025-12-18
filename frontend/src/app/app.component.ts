@@ -239,11 +239,19 @@ import jsPDF from 'jspdf';
                 <td mat-cell *matCellDef="let postulante" class="grupo-ocupacional-cell">
                   <div class="grupo-ocupacional-content">
                     <div class="grupo-nombre">{{postulante.grupo_ocupacional || '-'}}</div>
-                    <ng-container *ngIf="postulante.especialidad && postulante.especialidad.trim() !== ''">
+                    <ng-container *ngIf="mostrarIpressPostulantes && postulante.especialidad && postulante.especialidad.trim() !== ''">
                       <div class="grupo-separador">-</div>
                       <div class="grupo-especialidad">{{postulante.especialidad}}</div>
                     </ng-container>
                   </div>
+                </td>
+              </ng-container>
+
+              <!-- Columna Especialidad (cuando IPRESS está oculta) -->
+              <ng-container matColumnDef="especialidad">
+                <th mat-header-cell *matHeaderCellDef>Especialidad</th>
+                <td mat-cell *matCellDef="let postulante">
+                  {{postulante.especialidad || '-'}}
                 </td>
               </ng-container>
 
@@ -392,7 +400,7 @@ import jsPDF from 'jspdf';
         </div>
       </div>
 
-      <!-- Botones de exportación -->
+      <!-- Botones de exportación y vista -->
       <div class="export-buttons">
         <button mat-raised-button class="btn-pdf" (click)="generarPDFCredenciales()">
           <mat-icon>picture_as_pdf</mat-icon>
@@ -402,6 +410,14 @@ import jsPDF from 'jspdf';
         <button mat-raised-button class="btn-excel" (click)="exportarExcel()">
           <mat-icon>file_download</mat-icon>
           Crear Excel
+        </button>
+
+        <button mat-raised-button 
+                color="primary"
+                class="btn-toggle-view"
+                (click)="toggleVistaIpress()">
+          <mat-icon>{{mostrarIpressPostulantes ? 'visibility_off' : 'visibility'}}</mat-icon>
+          {{mostrarIpressPostulantes ? 'Ocultar IPRESS' : 'Mostrar IPRESS'}}
         </button>
       </div>
     </div>
@@ -1257,6 +1273,16 @@ import jsPDF from 'jspdf';
       padding-right: 4px !important;
       white-space: nowrap !important;
     }
+
+    /* Botón de alternar vista */
+    .btn-toggle-view {
+      font-weight: 500 !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-toggle-view mat-icon {
+      margin-right: 6px;
+    }
   `]
 })
 export class AppComponent implements OnInit {
@@ -1274,8 +1300,9 @@ export class AppComponent implements OnInit {
   uploadingFile = false;
 
   // Columnas de las tablas
-  columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'ipress', 'acciones'];
+  columnasPostulantes: string[] = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'especialidad', 'acciones'];
   columnasPlazas: string[] = ['red', 'ipress', 'grupo_ocupacional', 'total', 'asignados', 'libres'];
+  mostrarIpressPostulantes = false; // Por defecto oculta IPRESS
 
   // Filtros
   filtroPostulantes: FiltroPostulantes = {};
@@ -1337,6 +1364,21 @@ export class AppComponent implements OnInit {
         }, 0);
       }
     });
+  }
+
+  /**
+   * Alternar entre mostrar/ocultar IPRESS en tabla de postulantes
+   */
+  toggleVistaIpress() {
+    this.mostrarIpressPostulantes = !this.mostrarIpressPostulantes;
+    
+    if (this.mostrarIpressPostulantes) {
+      // Mostrar IPRESS: grupo_ocupacional con especialidad + ipress
+      this.columnasPostulantes = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'ipress', 'acciones'];
+    } else {
+      // Ocultar IPRESS: grupo_ocupacional sin especialidad + especialidad como columna
+      this.columnasPostulantes = ['orden', 'nombres', 'estado', 'grupo_ocupacional', 'especialidad', 'acciones'];
+    }
   }
 
   /**
