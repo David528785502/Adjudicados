@@ -1972,46 +1972,26 @@ export class AppComponent implements OnInit {
     // Guardar el postulante seleccionado
     this.postulanteSeleccionado = postulante;
     
-    // Buscar plazas disponibles (sin filtrar por grupo ocupacional)
-    const filtros: FiltroPlazas = { 
-      soloDisponibles: true // Solo mostrar plazas con cupos libres
-    };
+    // Usar las plazas que ya están visibles en la tabla (ya filtradas por los filtros globales)
+    // Solo filtrar por disponibilidad (libres > 0) y grupo ocupacional del postulante
+    let plazasDisponibles = this.plazas.filter(p => 
+      p.libres > 0 && 
+      p.grupo_ocupacional_id === postulante.grupo_ocupacional_id
+    );
     
-    this.apiService.getPlazasConDisponibilidad(filtros).subscribe({
-      next: (response) => {
-        if (response.success && response.data && response.data.length > 0) {
-          let plazasDisponibles = response.data;
-          
-          // Aplicar filtro de especialidades si está activo
-          if (this.filtroGlobal.especialidades && this.filtroGlobal.especialidades.length > 0) {
-            const especialidadesValidas = this.filtroGlobal.especialidades.filter(e => e !== undefined);
-            if (especialidadesValidas.length > 0) {
-              plazasDisponibles = plazasDisponibles.filter((p: any) => 
-                especialidadesValidas.includes(p.especialidad || '')
-              );
-            }
-          }
-          
-          // Verificar si hay plazas después del filtro
-          if (plazasDisponibles.length === 0) {
-            this.mostrarError(`No hay plazas disponibles que coincidan con los filtros de especialidad seleccionados`);
-            return;
-          }
-          
-          this.plazasDisponibles = plazasDisponibles;
-          this.plazasFiltradasModal = [...plazasDisponibles];
-          this.plazaSeleccionada = null; // Resetear selección
-          
-          this.mostrarModalAdjudicacion = true; // Mostrar modal
-        } else {
-          this.mostrarError(`No hay plazas disponibles en este momento`);
-        }
-      },
-      error: (error) => {
-        console.error('Error al buscar plazas disponibles:', error);
-        this.mostrarError(`Error al buscar plazas disponibles: ${error.error?.message || error.message}`);
-      }
-    });
+    // Verificar si hay plazas disponibles
+    if (plazasDisponibles.length === 0) {
+      this.mostrarError('No hay plazas disponibles para este postulante en la vista actual. Verifique los filtros aplicados.');
+      return;
+    }
+    
+    // Mostrar modal con las plazas disponibles
+    this.plazasDisponibles = plazasDisponibles;
+    this.plazasFiltradasModal = [...plazasDisponibles];
+    this.plazaSeleccionada = null;
+    this.busquedaRedModal = '';
+    this.busquedaIpressModal = '';
+    this.mostrarModalAdjudicacion = true;
   }
   
   /**
