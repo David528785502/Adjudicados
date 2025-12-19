@@ -1415,9 +1415,24 @@ export class AppComponent implements OnInit {
    */
   cargarGruposOcupacionalesAsync(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.apiService.getGruposOcupacionales().subscribe({
+      // Cargar grupos ocupacionales desde postulantes
+      this.apiService.getPostulantes({}).subscribe({
         next: (response) => {
-          this.gruposOcupacionales = response.data;
+          const gruposMap = new Map<number, GrupoOcupacional>();
+          
+          // Extraer grupos únicos de postulantes
+          (response.data || []).forEach((postulante: any) => {
+            if (postulante.grupo_ocupacional_id && postulante.grupo_ocupacional) {
+              gruposMap.set(postulante.grupo_ocupacional_id, {
+                id: postulante.grupo_ocupacional_id,
+                nombre: postulante.grupo_ocupacional
+              });
+            }
+          });
+          
+          this.gruposOcupacionales = Array.from(gruposMap.values()).sort((a, b) => 
+            a.nombre.localeCompare(b.nombre)
+          );
           this.gruposOcupacionalesFiltrados = [...this.gruposOcupacionales];
           resolve();
         },
@@ -1602,9 +1617,25 @@ export class AppComponent implements OnInit {
    * Cargar grupos ocupacionales
    */
   cargarGruposOcupacionales() {
-    this.apiService.getGruposOcupacionales().subscribe({
+    // Cargar grupos ocupacionales desde postulantes
+    this.apiService.getPostulantes({}).subscribe({
       next: (response) => {
-        this.gruposOcupacionales = response.data;
+        const gruposMap = new Map<number, GrupoOcupacional>();
+        
+        // Extraer grupos únicos de postulantes
+        (response.data || []).forEach((postulante: any) => {
+          if (postulante.grupo_ocupacional_id && postulante.grupo_ocupacional) {
+            gruposMap.set(postulante.grupo_ocupacional_id, {
+              id: postulante.grupo_ocupacional_id,
+              nombre: postulante.grupo_ocupacional
+            });
+          }
+        });
+        
+        this.gruposOcupacionales = Array.from(gruposMap.values()).sort((a, b) => 
+          a.nombre.localeCompare(b.nombre)
+        );
+        this.gruposOcupacionalesFiltrados = [...this.gruposOcupacionales];
       },
       error: (error) => {
         console.error('Error al cargar grupos ocupacionales:', error);
@@ -1704,18 +1735,8 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    // Extraer especialidades de postulantes del grupo seleccionado
+    // Extraer especialidades SOLO de postulantes del grupo seleccionado
     this.postulantesSinFiltrar.forEach(p => {
-      if (p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId && p.especialidad) {
-        const esp = p.especialidad.trim();
-        if (esp !== '') {
-          especialidadesSet.add(esp);
-        }
-      }
-    });
-
-    // Extraer especialidades de plazas del grupo seleccionado
-    this.plazasSinFiltrar.forEach(p => {
       if (p.grupo_ocupacional_id === this.filtroGlobal.grupoOcupacionalId && p.especialidad) {
         const esp = p.especialidad.trim();
         if (esp !== '') {
